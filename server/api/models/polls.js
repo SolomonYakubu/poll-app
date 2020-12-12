@@ -1,12 +1,25 @@
 const mongoose = require("mongoose");
+
 const pollSchema = mongoose.Schema({
   name: {
     required: true,
     type: String,
   },
-  categories: {
-    type: Array,
-  },
+  categories: [
+    {
+      name: String,
+      voters: Array,
+      candidate: [
+        {
+          name: String,
+          votes: {
+            type: Number,
+            default: 0,
+          },
+        },
+      ],
+    },
+  ],
 
   deadline: {
     type: Date,

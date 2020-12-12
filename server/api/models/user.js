@@ -9,11 +9,5 @@ const userSchema = mongoose.Schema({
     required: true,
     unique: true,
   },
-  candidateSelected: {
-    type: Array,
-  },
-  categoryVoted: {
-    type: Array,
-  },
 });
 module.exports = mongoose.model("User", userSchema);
