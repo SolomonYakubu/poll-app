@@ -27,7 +27,7 @@ router.post("/register", async (req, res) => {
     });
     const newUser = await user.save();
     const token = jwt.sign({ mobile_id }, process.env.TOKEN_SECRET, {
-      expiresIn: "30m",
+      expiresIn: "1h",
     });
     res.status(201).json({ newUser, token });
   } catch (error) {
@@ -43,7 +43,7 @@ router.post("/log-in", async (req, res) => {
       expiresIn: "5h",
     });
     const token = jwt.sign({ mobile_id }, process.env.TOKEN_SECRET, {
-      expiresIn: "30m",
+      expiresIn: "1h",
     });
 
     return res.json({ token, adminToken });
@@ -52,7 +52,7 @@ router.post("/log-in", async (req, res) => {
       const id = await User.findOne({ mobile_id });
       if (id) {
         const token = jwt.sign({ mobile_id }, process.env.TOKEN_SECRET, {
-          expiresIn: "30m",
+          expiresIn: "1h",
         });
         res.json({ mobile_id, token });
       } else {

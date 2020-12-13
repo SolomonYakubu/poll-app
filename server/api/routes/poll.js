@@ -7,6 +7,7 @@ const verifyAdminToken = require("../auth/adminAuth");
 const Polls = require("../models/polls");
 
 const User = require("../models/user");
+const polls = require("../models/polls");
 
 // get all Polls
 router.get("/", async (req, res) => {
@@ -20,11 +21,26 @@ router.get("/", async (req, res) => {
     res.json({ message: error.message });
   }
 });
-
+//get poll by name
+router.get("/:name", verifyToken, async (req, res) => {
+  const pollName = req.params.name;
+  try {
+    const poll = await Polls.findOne({ name: pollName });
+    if (!poll) {
+      res.sendStatus(404);
+    }
+    res.json(poll);
+  } catch (error) {
+    res.json({ message: error.message });
+  }
+});
 // Create a new Poll
 router.post("/", verifyAdminToken, async (req, res) => {
   if (await Polls.findOne({ name: req.body.name })) {
-    return res.status(403).json({ message: "Poll already exist" });
+    return res.status(406).json({ message: "Poll already exist" });
+  }
+  if (req.body.name == "") {
+    return res.status(400).json({ message: "Bad request" });
   }
   const data = {
     name: req.body.name,
@@ -44,6 +60,13 @@ router.post("/category", verifyAdminToken, async (req, res) => {
   const pollName = req.body.pollName;
   try {
     const poll = await Polls.findOne({ name: pollName });
+
+    const nameArr = poll.categories.map((item) => item.name);
+    const isDuplicate = nameArr.includes(name) ? true : false;
+    console.log(isDuplicate);
+    if (isDuplicate) {
+      return res.status(406).json({ message: "category already exist" });
+    }
     poll.categories.push({ name });
     poll.save();
     res.status(201).json(poll);
@@ -55,25 +78,28 @@ router.post("/category", verifyAdminToken, async (req, res) => {
 router.post("/candidate/:category_id", verifyAdminToken, async (req, res) => {
   const name = req.body.name;
   const pollName = req.body.pollName;
-  const category = req.body.category;
+
   const category_id = req.params.category_id;
   const data = {
     name,
   };
 
   try {
-    // if (await Candidate.findOne({ name })) {
-    //   return res.status(403).json({ message: "Candidate already exist" });
-    // }
     const poll = await Polls.findOne({ name: pollName });
+    const nameArr = poll.categories
+      .filter((item) => item._id == category_id)[0]
+      .candidate.map((item) => item.name);
+
+    console.log(nameArr);
+    const isDuplicate = nameArr.includes(name) ? true : false;
+    console.log(isDuplicate);
+    if (isDuplicate) {
+      return res.status(406).json({ message: "Candidate already exist" });
+    }
     poll.categories.id(category_id).candidate.push(data);
 
-    //const newCandidate = await candidate.save();
     const newCandidate = await poll.save();
-    // if (!poll.categories.includes(category)) {
-    //   poll.categories.push(category);
-    //   poll.save();
-    // }
+
     res.status(201).json(newCandidate);
   } catch (error) {
     res.json({ message: error.message });
@@ -85,8 +111,6 @@ router.post(
   "/vote/category/:category_id/candidate/:candidate_id",
   verifyToken,
   async (req, res) => {
-    const name = req.body.name;
-    const category = req.body.category;
     const pollName = req.body.pollName;
     const mobile_id = req.data.mobile_id;
     const candidate_id = req.params.candidate_id;
@@ -97,20 +121,6 @@ router.post(
         return res.status(404).json({ message: "Poll not found" });
       }
 
-      // const user = await User.findOne({
-      //   mobile_id,
-      // });
-      // if (
-      //   user.poll.categoryVoted.includes(category) &&
-      //   user.poll.name === pollName
-      // ) {
-      //   return res
-      //     .status(401)
-      //     .json({ message: "You have already voted in this category" });
-      // }
-      // const candidate = await Candidate.findOne({
-      //   name: name,
-      // });
       const poll = await Polls.findOne({ name: pollName });
 
       if (await poll.categories.id(category_id).voters.includes(mobile_id)) {
@@ -122,22 +132,37 @@ router.post(
       poll.categories.id(category_id).voters.push(mobile_id);
       poll.save();
 
-      // candidate.votes++;
-      // candidate.save();
-
-      // user.candidateSelected.push(name);
-      // user.poll.categoryVoted.push(category);
-      // user.poll.name = pollName;
-      // user.save();
-      // const test = candidate.candidate.filter(
-      //   (item) => item.name === "Yakubu Solomon"
-      // ).votes++;
-      // test.save();
       res.json(poll);
     } catch (error) {
       res.json({ message: error.message });
     }
   }
 );
+//Correcting details
+router.delete(
+  "/category/:category_id/candidate/:candidate_id",
+  verifyAdminToken,
+  async (req, res) => {
+    const category_id = req.params.category_id;
+    const candidate_id = req.params.candidate_id;
+    const pollName = req.body.pollName;
 
+    try {
+      const poll = await Polls.findOne({ name: pollName });
+
+      const filter = poll.categories
+        .id(category_id)
+        .candidate.filter((item) => item._id != candidate_id);
+      if (filter == null) {
+        return res.sendStatus(404);
+      }
+      poll.categories.id(category_id).candidate = filter;
+      poll.save();
+      console.log(filter);
+      res.json(poll);
+    } catch (error) {
+      res.json({ message: error.message });
+    }
+  }
+);
 module.exports = router;
