@@ -9,14 +9,6 @@ import { HashRouter as Router, Route } from "react-router-dom";
 import "./App.css";
 
 function App() {
-  const [pollCreate, setPollCreate] = useState(false);
-  const [pollName, setPollName] = useState("");
-  const createPolls = () => {
-    setPollCreate(true);
-  };
-  const pollNameSet = (val) => {
-    setPollName(val);
-  };
   return (
     <div className="App">
       <Router>
@@ -27,18 +19,13 @@ function App() {
           <Register />
         </Route>
         <Route path="/poll">
-          {pollCreate ? (
-            <CreatePoll pollCreate={pollCreate} createPolls={createPolls} />
-          ) : (
-            <Poll
-              pollCreate={pollCreate}
-              createPolls={createPolls}
-              pollNameSet={pollNameSet}
-            />
-          )}
+          <Poll />
+        </Route>
+        <Route path="/create-poll">
+          <CreatePoll />
         </Route>
         <Route path="/vote">
-          <Vote pollName={pollName} />
+          <Vote />
         </Route>
       </Router>
     </div>

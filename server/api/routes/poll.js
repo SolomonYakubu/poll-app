@@ -6,9 +6,6 @@ const verifyToken = require("../auth/userAuth");
 const verifyAdminToken = require("../auth/adminAuth");
 const Polls = require("../models/polls");
 
-const User = require("../models/user");
-const polls = require("../models/polls");
-
 // get all Polls
 router.get("/", async (req, res) => {
   try {
@@ -130,6 +127,10 @@ router.post(
       }
       poll.categories.id(category_id).candidate.id(candidate_id).votes++;
       poll.categories.id(category_id).voters.push(mobile_id);
+      poll.categories
+        .id(category_id)
+        .candidate.id(candidate_id)
+        .voters.push(mobile_id);
       poll.save();
 
       res.json(poll);
@@ -138,7 +139,7 @@ router.post(
     }
   }
 );
-//Correcting details
+//delete a candidate
 router.delete(
   "/category/:category_id/candidate/:candidate_id",
   verifyAdminToken,
@@ -150,19 +151,34 @@ router.delete(
     try {
       const poll = await Polls.findOne({ name: pollName });
 
-      const filter = poll.categories
-        .id(category_id)
-        .candidate.filter((item) => item._id != candidate_id);
-      if (filter == null) {
-        return res.sendStatus(404);
-      }
-      poll.categories.id(category_id).candidate = filter;
+      // const filter = poll.categories
+      //   .id(category_id) //eslint-disable-next-line
+      //   .candidate.filter((item) => item._id != candidate_id);
+      // if (filter == null) {
+      //   return res.sendStatus(404);
+      // }
+      // poll.categories.id(category_id).candidate = filter;
+      poll.categories.id(category_id).candidate.id(candidate_id).remove();
       poll.save();
-      console.log(filter);
+      console.log(poll);
       res.json(poll);
     } catch (error) {
       res.json({ message: error.message });
     }
   }
 );
+//delete a category
+router.delete("/category/:category_id", verifyAdminToken, async (req, res) => {
+  const category_id = req.params.category_id;
+  const pollName = req.body.pollName;
+  try {
+    const poll = await Polls.findOne({ name: pollName });
+    poll.categories.id(category_id).remove();
+    poll.save();
+    res.json(poll);
+    console.log(poll);
+  } catch (error) {
+    res.json({ message: error.message });
+  }
+});
 module.exports = router;

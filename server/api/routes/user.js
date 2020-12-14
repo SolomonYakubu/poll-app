@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
-const verifyToken = require("../auth/userAuth");
+
 const { verifyPhoneNumber } = require("nigerian-phone-number-validator");
 router.get("/", (req, res) => {
   res.send("Hello world");
@@ -46,7 +46,7 @@ router.post("/log-in", async (req, res) => {
       expiresIn: "1h",
     });
 
-    return res.json({ token, adminToken });
+    return res.json({ mobile_id, token, adminToken });
   } else {
     try {
       const id = await User.findOne({ mobile_id });

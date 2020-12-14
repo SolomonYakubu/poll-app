@@ -1,20 +1,70 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "flatpickr/dist/themes/dark.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Flatpickr from "react-flatpickr";
+
 import { useHistory } from "react-router-dom";
 import axios from "axios";
 
 import { Ring } from "awesome-react-spinners";
 import "../style.css";
 const Category = (props) => {
+  const history = useHistory();
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState([]);
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [candidateName, setCandidateName] = useState("");
   const token = JSON.parse(localStorage.getItem("token"));
+  const pollName = localStorage.getItem("pollName");
+
+  //getData on load
+
+  useEffect(() => {
+    if (!token.adminToken) {
+      history.push("/");
+    }
+    const getData = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:3002/poll/${localStorage.getItem("pollName")}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token.token}`,
+            },
+          }
+        );
+        //eslint-disable-next-line
+
+        setCategory([...response.data.categories]);
+        setLoading(false);
+      } catch (error) {
+        const err = error.message.split(" ")[5];
+        switch (err) {
+          case "401":
+            setLoading(false);
+            toast.error("Session expired", {
+              position: "top-right",
+              autoClose: 3000,
+              hideProgressBar: "false",
+            });
+            history.push("/");
+            break;
+
+          default:
+            setLoading(false);
+            toast.error("Network error", {
+              position: "top-right",
+              autoClose: 3000,
+              hideProgressBar: "false",
+            });
+        }
+      }
+    };
+    getData();
+    //eslint-disable-next-line
+  }, []);
+
   const onNameChange = (val) => {
     setName(val);
   };
@@ -28,7 +78,7 @@ const Category = (props) => {
         "http://localhost:3002/poll/category",
         {
           name: name,
-          pollName: props.pollName,
+          pollName: pollName,
         },
         {
           headers: {
@@ -40,6 +90,7 @@ const Category = (props) => {
       //console.log(response.data);
       setLoading(false);
       setCategory([...response.data.categories]);
+      setName("");
       console.log(category);
     } catch (error) {
       const err = error.message.split(" ")[5];
@@ -71,7 +122,7 @@ const Category = (props) => {
         `http://localhost:3002/poll/candidate/${val}`,
         {
           name: candidateName,
-          pollName: props.pollName,
+          pollName: pollName,
         },
         {
           headers: {
@@ -122,7 +173,7 @@ const Category = (props) => {
       const response = await axios({
         url: `http://localhost:3002/poll/category/${categoryId}/candidate/${val}`,
         method: "DELETE",
-        data: { pollName: props.pollName },
+        data: { pollName: pollName },
         headers: {
           "content-type": "application/json",
           Authorization: `Bearer ${token.adminToken}`,
@@ -135,7 +186,7 @@ const Category = (props) => {
       console.log(error.message);
     }
   };
-  console.log(candidateName);
+  console.log(pollName);
   return (
     <div className="poll-container">
       <ToastContainer />
@@ -144,13 +195,20 @@ const Category = (props) => {
           <Ring />
         </p>
       ) : null}
-      <div className={props.pollCreated ? "poll-body" : "hide"}>
+      <div className="poll-body">
         <h2 className="create-poll-label heading">
-          Poll Name: {props.pollName}
+          Poll Name: {localStorage.getItem("pollName")}
         </h2>
+        <button
+          className="poll-create-poll-btn"
+          style={{ alignSelf: "flex-start", marginLeft: 0 }}
+          onClick={() => history.push("/poll")}
+        >
+          Done
+        </button>
         <div style={{ display: "flex", flexDirection: "column-reverse" }}>
           {category.map((item) => (
-            <div className="create-poll-category">
+            <div className="create-poll-category" key={item._id}>
               <p
                 className="create-poll-label sub-heading"
                 style={{
@@ -174,6 +232,7 @@ const Category = (props) => {
                       alignItems: "center",
                       justifyContent: "space-between",
                     }}
+                    key={item._id}
                   >
                     <p
                       style={{
@@ -217,7 +276,6 @@ const Category = (props) => {
                 />
                 <button
                   value={item._id}
-                  key={item._id}
                   className="poll-create-poll-btn"
                   style={{
                     marginTop: 0,
@@ -273,117 +331,4 @@ const Category = (props) => {
     </div>
   );
 };
-export default function CreatPoll(props) {
-  const token = JSON.parse(localStorage.getItem("token"));
-  const [date, setDate] = useState(`${new Date()}`);
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [pollCreated, setPollCreated] = useState(false);
-  const history = useHistory();
-  const onNameChange = (val) => {
-    setName(val);
-  };
-  const createPoll = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post(
-        "http://localhost:3002/poll",
-        {
-          name: name,
-          deadline: date,
-        },
-        {
-          headers: {
-            "Content-type": "application/json",
-            Authorization: `Bearer ${token.adminToken}`,
-          },
-        }
-      );
-      setPollCreated(true);
-      console.log(response);
-      setLoading(false);
-      // window.location.reload();
-    } catch (error) {
-      const err = error.message.split(" ")[5];
-
-      switch (err) {
-        case "406":
-          setLoading(false);
-          toast.error("Poll already exist", {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: "false",
-          });
-          break;
-        case "400":
-          setLoading(false);
-          toast.error("Fields cannot be empty", {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: "false",
-          });
-          break;
-        case "401":
-          setLoading(false);
-          toast.error("Session Expired", {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: "false",
-          });
-          history.push("/");
-          break;
-        default:
-          setLoading(false);
-          toast.error("Network error", {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: "false",
-          });
-      }
-    }
-  };
-  console.log(date);
-
-  return (
-    <div className="poll-container">
-      {loading ? (
-        <p>
-          <Ring />
-        </p>
-      ) : null}
-      <div className={pollCreated ? "hide" : "poll-body"}>
-        <input
-          type="text"
-          className="input"
-          placeholder="Poll Name"
-          onChange={(e) => onNameChange(e.target.value)}
-          value={name}
-        />
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            alignSelf: "flex-start",
-            boxSizing: "border-box",
-          }}
-        >
-          <p style={{ margin: "3px" }}>Deadline</p>
-          <Flatpickr
-            data-enable-time
-            value={date}
-            style={{ fontFamily: "Poppins", fontSize: "20px" }}
-            onChange={(date) => {
-              setDate(date);
-            }}
-          />
-        </div>
-        <button className="register-button input" onClick={createPoll}>
-          Create Poll
-        </button>
-      </div>
-
-      <Category pollCreated={pollCreated} pollName={name} />
-    </div>
-  );
-}
+export default Category;
