@@ -57,6 +57,15 @@ export default function Vote(props) {
             });
 
             break;
+          case "405":
+            setLoading(false);
+            toast.success("Poll Expired", {
+              position: "top-right",
+              autoClose: 3000,
+              hideProgressBar: "false",
+            });
+            history.push("/poll");
+            break;
           default:
             setLoading(false);
             toast.error("Network error", {

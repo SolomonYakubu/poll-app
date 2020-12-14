@@ -6,6 +6,19 @@ const verifyToken = require("../auth/userAuth");
 const verifyAdminToken = require("../auth/adminAuth");
 const Polls = require("../models/polls");
 
+const checkDeadline = async (req, res, next) => {
+  const pollName = req.params.name;
+  try {
+    const poll = await Polls.findOne({ name: pollName });
+    const deadline = poll.deadline;
+    if (new Date(deadline) < new Date()) {
+      return res.status(405).json({ message: "poll Expired" });
+    }
+    next();
+  } catch (error) {
+    res.json({ message: error.message });
+  }
+};
 // get all Polls
 router.get("/", async (req, res) => {
   try {
@@ -19,7 +32,7 @@ router.get("/", async (req, res) => {
   }
 });
 //get poll by name
-router.get("/:name", verifyToken, async (req, res) => {
+router.get("/:name", [verifyToken, checkDeadline], async (req, res) => {
   const pollName = req.params.name;
   try {
     const poll = await Polls.findOne({ name: pollName });
@@ -181,4 +194,5 @@ router.delete("/category/:category_id", verifyAdminToken, async (req, res) => {
     res.json({ message: error.message });
   }
 });
+
 module.exports = router;

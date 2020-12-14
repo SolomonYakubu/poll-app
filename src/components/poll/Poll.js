@@ -128,12 +128,7 @@ export default function Poll(props) {
   const [pollCreated, setPollCreated] = useState(false);
 
   const history = useHistory();
-  const createPoll = () => {
-    if (!token.adminToken) {
-      return toast.error("Only Admins can create a poll");
-    }
-    props.createPolls();
-  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -176,22 +171,24 @@ export default function Poll(props) {
       <div className={pollCreated ? "hide" : "poll-container"}>
         <ToastContainer />
         {loading ? <Ring /> : null}
-        <button
-          className="poll-create-poll-btn"
-          onClick={() => {
-            if (!token.adminToken) {
-              return toast.error("Only admins can create polls", {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: "false",
-              });
-            }
-            setPollCreated(true);
-          }}
-        >
-          {" "}
-          Create Poll
-        </button>
+        {token.adminToken ? (
+          <button
+            className="poll-create-poll-btn"
+            onClick={() => {
+              if (!token.adminToken) {
+                return toast.error("Only admins can create polls", {
+                  position: "top-right",
+                  autoClose: 3000,
+                  hideProgressBar: "false",
+                });
+              }
+              setPollCreated(true);
+            }}
+          >
+            {" "}
+            Create Poll
+          </button>
+        ) : null}
         <h2 style={{ color: "#fff" }}>Polls</h2>
         <div
           className="poll-body"
@@ -218,31 +215,52 @@ export default function Poll(props) {
                   <p style={{ marginLeft: "10px", fontSize: "18px" }}>
                     Poll: {item.name}
                   </p>
-                  <button
-                    className="poll-create-poll-btn"
-                    onClick={() => {
-                      if (!token.adminToken) {
-                        return toast.error("Only admins can edit categories", {
-                          position: "top-right",
-                          autoClose: 3000,
-                          hideProgressBar: "false",
-                        });
-                      }
-                      localStorage.setItem("pollName", item.name);
-                      console.log(localStorage.getItem("pollName"));
-                      history.push("/create-poll");
-                    }}
-                    style={{
-                      height: "25px",
-                      padding: "3px",
-                      marginRight: 0,
-                      marginTop: 0,
-                      borderRadius: 0,
-                      background: "blue",
-                    }}
-                  >
-                    Edit
-                  </button>
+                  {new Date(item.deadline) < new Date() ? (
+                    <p style={{ color: "red" }}>Expired</p>
+                  ) : null}
+                  {new Date(item.deadline) < new Date() ? (
+                    <button
+                      className="poll-create-poll-btn"
+                      style={{
+                        height: "25px",
+                        padding: "3px",
+                        marginRight: 0,
+                        marginTop: 0,
+                        borderRadius: 0,
+                      }}
+                    >
+                      view stats
+                    </button>
+                  ) : token.adminToken ? (
+                    <button
+                      className="poll-create-poll-btn"
+                      onClick={() => {
+                        if (!token.adminToken) {
+                          return toast.error(
+                            "Only admins can edit categories",
+                            {
+                              position: "top-right",
+                              autoClose: 3000,
+                              hideProgressBar: "false",
+                            }
+                          );
+                        }
+                        localStorage.setItem("pollName", item.name);
+                        console.log(localStorage.getItem("pollName"));
+                        history.push("/create-poll");
+                      }}
+                      style={{
+                        height: "25px",
+                        padding: "3px",
+                        marginRight: 0,
+                        marginTop: 0,
+                        borderRadius: 0,
+                        background: "blue",
+                      }}
+                    >
+                      Edit
+                    </button>
+                  ) : null}
                 </div>
                 <p>
                   Deadline:{" "}
@@ -252,16 +270,27 @@ export default function Poll(props) {
                     " " +
                     "GMT"}
                 </p>
-                <button
-                  className="poll-button user"
-                  onClick={() => {
-                    localStorage.setItem("pollName", item.name);
-                    history.push("/vote");
-                  }}
-                  style={{ background: " rgb(61, 187, 61)" }}
-                >
-                  Enter Poll
-                </button>
+                {new Date(item.deadline) < new Date() ? (
+                  token.adminToken ? (
+                    <button
+                      className="poll-button user"
+                      style={{ background: "red" }}
+                    >
+                      Delete Poll
+                    </button>
+                  ) : null
+                ) : (
+                  <button
+                    className="poll-button user"
+                    onClick={() => {
+                      localStorage.setItem("pollName", item.name);
+                      history.push("/vote");
+                    }}
+                    style={{ background: " rgb(61, 187, 61)" }}
+                  >
+                    Enter Poll
+                  </button>
+                )}
               </div>
             </div>
           ))}
