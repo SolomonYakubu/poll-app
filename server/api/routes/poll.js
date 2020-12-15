@@ -5,6 +5,7 @@ const router = express.Router();
 const verifyToken = require("../auth/userAuth");
 const verifyAdminToken = require("../auth/adminAuth");
 const Polls = require("../models/polls");
+const { findByPlaceholderText } = require("@testing-library/react");
 
 const checkDeadline = async (req, res, next) => {
   const pollName = req.params.name;
@@ -190,6 +191,20 @@ router.delete("/category/:category_id", verifyAdminToken, async (req, res) => {
     poll.save();
     res.json(poll);
     console.log(poll);
+  } catch (error) {
+    res.json({ message: error.message });
+  }
+});
+
+//delete a poll
+router.delete("/", verifyAdminToken, async (req, res) => {
+  const pollName = req.body.pollName;
+
+  try {
+    const poll = await Polls.findOne({ name: pollName });
+    poll.remove();
+    poll.save();
+    res.json(poll);
   } catch (error) {
     res.json({ message: error.message });
   }

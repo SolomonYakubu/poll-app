@@ -96,6 +96,7 @@ const Category = (props) => {
       console.log(category);
     } catch (error) {
       const err = error.message.split(" ")[5];
+      console.log(error.message);
 
       switch (err) {
         case "406":

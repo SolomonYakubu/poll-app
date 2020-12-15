@@ -78,7 +78,7 @@ function CreatPoll(props) {
       }
     }
   };
-  console.log(date);
+  console.log(name);
 
   return (
     <div className="poll-container">
@@ -166,7 +166,26 @@ export default function Poll(props) {
 
     //eslint-disable-next-line
   }, []);
-
+  const deletePoll = async (val) => {
+    setLoading(true);
+    try {
+      const response = await axios({
+        url: `https://cyon-poll.herokuapp.com/poll`,
+        method: "DELETE",
+        data: { pollName: val },
+        headers: {
+          "content-type": "application/json",
+          Authorization: `Bearer ${token.adminToken}`,
+        },
+      });
+      setLoading(false);
+      console.log(response);
+      window.location.reload();
+    } catch (error) {
+      setLoading(false);
+      console.log(error.message);
+    }
+  };
   console.log(token);
   return (
     <div className="poll-container ">
@@ -277,6 +296,7 @@ export default function Poll(props) {
                     <button
                       className="poll-button user"
                       style={{ background: "red" }}
+                      onClick={() => deletePoll(item.name)}
                     >
                       Delete Poll
                     </button>
