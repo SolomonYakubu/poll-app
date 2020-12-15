@@ -21,7 +21,7 @@ function CreatPoll(props) {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:3002/poll",
+        "https://cyon-poll.herokuapp.com/poll",
         {
           name: name,
           deadline: date,
@@ -132,7 +132,7 @@ export default function Poll(props) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3002/poll");
+      const response = await axios.get("https://cyon-poll.herokuapp.com/poll");
       setLoading(false);
       setPoll(response.data);
     } catch (error) {

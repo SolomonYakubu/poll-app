@@ -19,7 +19,7 @@ export default function LogIn() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:3002/user/log-in",
+        "https://cyon-poll.herokuapp.com/user/log-in",
         {
           mobile_id: number,
         },

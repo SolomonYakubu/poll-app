@@ -22,7 +22,7 @@ export default function Register() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:3002/user/register",
+        "https://cyon-poll.herokuapp.com/user/register",
         {
           name: name,
           mobile_id: number,

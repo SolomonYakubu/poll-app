@@ -17,7 +17,9 @@ export default function Vote(props) {
     const getData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3002/poll/${localStorage.getItem("pollName")}`,
+          `https://cyon-poll.herokuapp.com/poll/${localStorage.getItem(
+            "pollName"
+          )}`,
           {
             headers: {
               Authorization: `Bearer ${token.token}`,
@@ -92,7 +94,7 @@ export default function Vote(props) {
     console.log(val);
     try {
       const response = await axios.post(
-        `http://localhost:3002/poll/vote/category/${categoryId}/candidate/${val}`,
+        `https://cyon-poll.herokuapp.com/poll/vote/category/${categoryId}/candidate/${val}`,
         {
           pollName: localStorage.getItem("pollName"),
         },
@@ -152,7 +154,7 @@ export default function Vote(props) {
 
   return (
     <div className="poll-container">
-      {loading ? <Loader style={{ float: "right" }} /> : null}
+      {loading ? <Loader style={{ position: "fixed" }} /> : null}
       <h3
         style={{
           alignSelf: "flex-start",
