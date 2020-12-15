@@ -108,6 +108,7 @@ function CreatPoll(props) {
           <Flatpickr
             data-enable-time
             value={date}
+            className="register-name input"
             style={{ fontFamily: "Poppins", fontSize: "20px" }}
             onChange={(date) => {
               setDate(date);
