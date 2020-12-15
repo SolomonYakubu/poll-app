@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Ring } from "awesome-react-spinners";
 import Flatpickr from "react-flatpickr";
+import "flatpickr/dist/themes/dark.css";
 import "../style.css";
 
 function CreatPoll(props) {
