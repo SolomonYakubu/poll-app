@@ -85,7 +85,7 @@ export default function Register() {
             required
           />
           <input
-            type="text"
+            type="number"
             className="register-name input"
             placeholder="Mobile Number"
             value={number}

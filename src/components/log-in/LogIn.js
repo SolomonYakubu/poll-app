@@ -72,7 +72,7 @@ export default function LogIn() {
           <h2 style={{ color: "#5f5f5f" }}>Log In</h2>
 
           <input
-            type="text"
+            type="number"
             className="register-name input"
             placeholder="Mobile Number"
             value={number}
