@@ -149,3 +149,10 @@
   margin: 0;
   border-radius: 0;
 }
+.flatpickr {
+  margin-left: 0;
+  margin-top: 0;
+  background: #fff;
+  width: 100%;
+  font-size: 16px;
+}
