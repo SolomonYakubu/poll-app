@@ -17,9 +17,7 @@ export default function Vote(props) {
     const getData = async () => {
       try {
         const response = await axios.get(
-          `https://cyon-poll.herokuapp.com/poll/${localStorage.getItem(
-            "pollName"
-          )}`,
+          `http://localhost:3002/poll/${localStorage.getItem("pollName")}`,
           {
             headers: {
               Authorization: `Bearer ${token.token}`,
@@ -81,22 +79,34 @@ export default function Vote(props) {
     getData();
     //eslint-disable-next-line
   }, []);
+  const vote = (candidate_id, category_id) => {
+    let newCategory = category;
 
-  const voteCandidate = async (val) => {
-    setLoading(true);
-    for (let x = 0; x < category.length; x++) {
-      if (category[x].candidate.map((item) => item._id).includes(val)) {
-        await setCategoryId(category[x]._id);
-        break;
+    const catLength = newCategory.length;
+
+    for (let i = 0; i < catLength; i++) {
+      if (newCategory[i]._id === category_id) {
+        const canLength = newCategory[i].candidate.length;
+        for (let j = 0; j < canLength; j++) {
+          newCategory[i].candidate[j].voted = false;
+
+          if (newCategory[i].candidate[j]._id === candidate_id) {
+            newCategory[i].candidate[j].voted = true;
+          }
+        }
       }
     }
-    console.log(categoryId);
-    console.log(val);
+    setCategory([...newCategory]);
+  };
+  const voteCandidate = async () => {
+    setLoading(true);
+
     try {
       const response = await axios.post(
-        `https://cyon-poll.herokuapp.com/poll/vote/category/${categoryId}/candidate/${val}`,
+        `http://localhost:3002/poll/vote/`,
         {
           pollName: localStorage.getItem("pollName"),
+          vote: { categories: category },
         },
         {
           headers: {
@@ -105,11 +115,14 @@ export default function Vote(props) {
           },
         }
       );
-
-      setCategory([...response.data.categories]);
-      setCategoryId("");
-      setLoading(false);
-      console.log(response);
+      if (response.status === 200) {
+        setLoading(false);
+        toast.success("You have voted successfully", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: "false",
+        });
+      }
     } catch (error) {
       const err = error.message.split(" ")[5];
 
@@ -151,6 +164,75 @@ export default function Vote(props) {
       }
     }
   };
+  // const voteCandidate = async (val) => {
+  //   setLoading(true);
+  //   for (let x = 0; x < category.length; x++) {
+  //     if (category[x].candidate.map((item) => item._id).includes(val)) {
+  //       await setCategoryId(category[x]._id);
+  //       break;
+  //     }
+  //   }
+  //   console.log(categoryId);
+  //   console.log(val);
+  //   try {
+  //     const response = await axios.post(
+  //       `http://localhost:3002/poll/vote/category/${categoryId}/candidate/${val}`,
+  //       {
+  //         pollName: localStorage.getItem("pollName"),
+  //       },
+  //       {
+  //         headers: {
+  //           "content-type": "application/json",
+  //           Authorization: `Bearer ${token.token}`,
+  //         },
+  //       }
+  //     );
+
+  //     setCategory([...response.data.categories]);
+  //     setCategoryId("");
+  //     setLoading(false);
+  //     console.log(response);
+  //   } catch (error) {
+  //     const err = error.message.split(" ")[5];
+
+  //     switch (err) {
+  //       case "403":
+  //         setLoading(false);
+  //         toast.error("You have already voted in this category", {
+  //           position: "top-right",
+  //           autoClose: 3000,
+  //           hideProgressBar: "false",
+  //         });
+  //         break;
+  //       case "401":
+  //         setLoading(false);
+  //         toast.error("Session expired", {
+  //           position: "top-right",
+  //           autoClose: 3000,
+  //           hideProgressBar: "false",
+  //         });
+  //         history.push("/");
+  //         break;
+
+  //       case "404":
+  //         setLoading(false);
+  //         toast.success("Click again to vote", {
+  //           position: "top-right",
+  //           autoClose: 3000,
+  //           hideProgressBar: "false",
+  //         });
+
+  //         break;
+  //       default:
+  //         setLoading(false);
+  //         toast.error("Network error", {
+  //           position: "top-right",
+  //           autoClose: 3000,
+  //           hideProgressBar: "false",
+  //         });
+  //     }
+  //   }
+  // };
 
   return (
     <div className="poll-container">
@@ -168,7 +250,7 @@ export default function Vote(props) {
       >
         Poll Name: {localStorage.getItem("pollName")}
       </h3>
-      <ToastContainer />
+      <ToastContainer limit={1} />
       <div
         className="poll-body"
         style={{
@@ -182,7 +264,7 @@ export default function Vote(props) {
           <div className="create-poll-candidate-div" key={item._id}>
             <p className="create-poll-candidate-label">Category: {item.name}</p>
 
-            {item.candidate.map((item) => (
+            {item.candidate.map((obj) => (
               <div
                 style={{
                   display: "flex",
@@ -190,7 +272,7 @@ export default function Vote(props) {
                   justifyContent: "space-between",
                   paddingBottom: "20px",
                 }}
-                key={item._id}
+                key={obj._id}
               >
                 <div
                   style={{
@@ -199,9 +281,9 @@ export default function Vote(props) {
                     marginLeft: "25px",
                   }}
                 >
-                  {item.name}
+                  {obj.name}
                 </div>
-                <p style={{ marginRight: "20px" }}>Votes: {item.votes}</p>
+                <p style={{ marginRight: "20px" }}>Votes: {obj.votes}</p>
                 <button
                   style={{
                     marginRight: "20px",
@@ -215,11 +297,13 @@ export default function Vote(props) {
                     outline: "none",
                   }}
                   className={
-                    item.voters.includes(token.mobile_id) ? "green" : "yellow"
+                    obj.voted || obj.voters.includes(token.mobile_id)
+                      ? "green"
+                      : "yellow"
                   }
                   // key={item._id}
                   // value={item._id}
-                  onClick={() => voteCandidate(item._id)}
+                  onClick={() => vote(obj._id, item._id)}
                 >
                   <FontAwesomeIcon icon={faCheck} />
                 </button>
@@ -229,7 +313,7 @@ export default function Vote(props) {
         ))}
         <button
           className="poll-create-poll-btn"
-          onClick={() => history.push("/poll")}
+          onClick={() => voteCandidate()}
         >
           Done
         </button>

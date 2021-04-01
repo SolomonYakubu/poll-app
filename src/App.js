@@ -4,6 +4,7 @@ import LogIn from "./components/log-in/LogIn";
 import Poll from "./components/poll/Poll";
 import CreatePoll from "./components/create-poll/CreatePoll";
 import Vote from "./components/vote/Vote";
+import Header from "./components/header/Header";
 import { HashRouter as Router, Route } from "react-router-dom";
 
 import "./App.css";
@@ -11,6 +12,7 @@ import "./App.css";
 function App() {
   return (
     <div className="App">
+      <Header />
       <Router>
         <Route exact path="/">
           <LogIn />

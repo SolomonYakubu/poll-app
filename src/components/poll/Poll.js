@@ -22,7 +22,7 @@ function CreatPoll(props) {
     setLoading(true);
     try {
       const response = await axios.post(
-        "https://cyon-poll.herokuapp.com/poll",
+        "http://localhost:3002/poll",
         {
           name: name,
           deadline: date,
@@ -82,6 +82,7 @@ function CreatPoll(props) {
 
   return (
     <div className="poll-container">
+      <ToastContainer limit={1} />
       {loading ? (
         <p>
           <Ring />
@@ -134,7 +135,7 @@ export default function Poll(props) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("https://cyon-poll.herokuapp.com/poll");
+      const response = await axios.get("http://localhost:3002/poll");
       setLoading(false);
       setPoll(response.data);
     } catch (error) {
@@ -170,7 +171,7 @@ export default function Poll(props) {
     setLoading(true);
     try {
       const response = await axios({
-        url: `https://cyon-poll.herokuapp.com/poll`,
+        url: `http://localhost:3002/poll`,
         method: "DELETE",
         data: { pollName: val },
         headers: {
@@ -190,7 +191,7 @@ export default function Poll(props) {
   return (
     <div className="poll-container ">
       <div className={pollCreated ? "hide" : "poll-container"}>
-        <ToastContainer />
+        <ToastContainer limit={1} />
         {loading ? <Ring /> : null}
         {token.adminToken ? (
           <button

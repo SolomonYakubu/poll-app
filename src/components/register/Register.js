@@ -22,7 +22,7 @@ export default function Register() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "https://cyon-poll.herokuapp.com/user/register",
+        "http://localhost:3002/user/register",
         {
           name: name,
           mobile_id: number,
@@ -68,7 +68,7 @@ export default function Register() {
   console.log(name, number);
   return (
     <div className="register-container">
-      <ToastContainer />
+      <ToastContainer limit={1} />
       <form
         className="register-form"
         method="POST"

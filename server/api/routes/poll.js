@@ -5,7 +5,6 @@ const router = express.Router();
 const verifyToken = require("../auth/userAuth");
 const verifyAdminToken = require("../auth/adminAuth");
 const Polls = require("../models/polls");
-const { findByPlaceholderText } = require("@testing-library/react");
 
 const checkDeadline = async (req, res, next) => {
   const pollName = req.params.name;
@@ -116,6 +115,45 @@ router.post("/candidate/:category_id", verifyAdminToken, async (req, res) => {
     res.json({ message: error.message });
   }
 });
+//The new vote a candidate
+
+router.post("/vote", verifyToken, async (req, res) => {
+  const pollName = req.body.pollName;
+  const mobile_id = req.data.mobile_id;
+  const votes = req.body.vote;
+  console.log(votes);
+  try {
+    if (!(await Polls.findOne({ name: pollName }))) {
+      return res.status(404).json({ message: "Poll not found" });
+    }
+
+    const poll = await Polls.findOne({ name: pollName });
+    if (poll.voters.includes(mobile_id)) {
+      return res.status(403).json({ message: "You have votec already" });
+    }
+    const catLength = votes.categories.length;
+
+    for (let i = 0; i < catLength; i++) {
+      const canLength = votes.categories[i].candidate.length;
+      for (let j = 0; j < canLength; j++) {
+        if (votes.categories[i].candidate[j].voted) {
+          poll.categories
+            .id(votes.categories[i]._id)
+            .candidate.id(votes.categories[i].candidate[j]._id).votes++;
+          poll.categories
+            .id(votes.categories[i]._id)
+            .candidate.id(votes.categories[i].candidate[j]._id)
+            .voters.push(mobile_id);
+        }
+      }
+    }
+    poll.voters.push(mobile_id);
+    poll.save();
+    res.json(poll);
+  } catch (error) {
+    res.json({ message: error.message });
+  }
+});
 
 //vote a candidate
 router.post(
@@ -202,6 +240,9 @@ router.delete("/", verifyAdminToken, async (req, res) => {
 
   try {
     const poll = await Polls.findOne({ name: pollName });
+    if (!poll) {
+      return res.sendStatus(404);
+    }
     poll.remove();
     poll.save();
     res.json(poll);

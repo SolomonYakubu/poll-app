@@ -1,0 +1,26 @@
+{
+  "files": {
+    "main.css": "/static/css/main.ea8599be.chunk.css",
+    "main.js": "/static/js/main.3fed8feb.chunk.js",
+    "main.js.map": "/static/js/main.3fed8feb.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.52d96962.js",
+    "runtime-main.js.map": "/static/js/runtime-main.52d96962.js.map",
+    "static/css/2.8b7a2f64.chunk.css": "/static/css/2.8b7a2f64.chunk.css",
+    "static/js/2.515197f3.chunk.js": "/static/js/2.515197f3.chunk.js",
+    "static/js/2.515197f3.chunk.js.map": "/static/js/2.515197f3.chunk.js.map",
+    "static/js/3.df7de83b.chunk.js": "/static/js/3.df7de83b.chunk.js",
+    "static/js/3.df7de83b.chunk.js.map": "/static/js/3.df7de83b.chunk.js.map",
+    "index.html": "/index.html",
+    "static/css/2.8b7a2f64.chunk.css.map": "/static/css/2.8b7a2f64.chunk.css.map",
+    "static/css/main.ea8599be.chunk.css.map": "/static/css/main.ea8599be.chunk.css.map",
+    "static/js/2.515197f3.chunk.js.LICENSE.txt": "/static/js/2.515197f3.chunk.js.LICENSE.txt",
+    "static/media/index.css": "/static/media/poppins-v12-latin-regular.c14093ce.woff"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.52d96962.js",
+    "static/css/2.8b7a2f64.chunk.css",
+    "static/js/2.515197f3.chunk.js",
+    "static/css/main.ea8599be.chunk.css",
+    "static/js/main.3fed8feb.chunk.js"
+  ]
+}

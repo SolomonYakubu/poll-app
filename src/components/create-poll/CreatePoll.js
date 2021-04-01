@@ -27,9 +27,7 @@ const Category = (props) => {
     const getData = async () => {
       try {
         const response = await axios.get(
-          `https://cyon-poll.herokuapp.com/poll/${localStorage.getItem(
-            "pollName"
-          )}`,
+          `http://localhost:3002/poll/${localStorage.getItem("pollName")}`,
           {
             headers: {
               Authorization: `Bearer ${token.token}`,
@@ -77,7 +75,7 @@ const Category = (props) => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "https://cyon-poll.herokuapp.com/poll/category",
+        "http://localhost:3002/poll/category",
         {
           name: name,
           pollName: pollName,
@@ -122,7 +120,7 @@ const Category = (props) => {
     setLoading(true);
     try {
       const response = await axios.post(
-        `https://cyon-poll.herokuapp.com/poll/candidate/${val}`,
+        `http://localhost:3002/poll/candidate/${val}`,
         {
           name: candidateName,
           pollName: pollName,
@@ -174,7 +172,7 @@ const Category = (props) => {
     }
     try {
       const response = await axios({
-        url: `https://cyon-poll.herokuapp.com/poll/category/${categoryId}/candidate/${val}`,
+        url: `http://localhost:3002/poll/category/${categoryId}/candidate/${val}`,
         method: "DELETE",
         data: { pollName: pollName },
         headers: {
@@ -192,7 +190,7 @@ const Category = (props) => {
   console.log(pollName);
   return (
     <div className="poll-container">
-      <ToastContainer />
+      <ToastContainer limit={1} />
       {loading ? (
         <p>
           <Ring />

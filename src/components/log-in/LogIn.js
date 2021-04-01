@@ -19,7 +19,7 @@ export default function LogIn() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "https://cyon-poll.herokuapp.com/user/log-in",
+        "http://localhost:3002/user/log-in",
         {
           mobile_id: number,
         },
@@ -52,6 +52,13 @@ export default function LogIn() {
             hideProgressBar: "false",
           });
           break;
+        case "404":
+          toast.error("Mobile number not registered", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: "false",
+          });
+          break;
         default:
           toast.error("Network error", {
             position: "top-right",
@@ -66,7 +73,7 @@ export default function LogIn() {
 
   return (
     <div className="register-container">
-      <ToastContainer />
+      <ToastContainer limit={1} />
       <form className="register-form" onSubmit={handleSubmit.bind(this)}>
         <div className="register-form-div">
           <h2 style={{ color: "#5f5f5f" }}>Log In</h2>
