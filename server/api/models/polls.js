@@ -12,7 +12,7 @@ const pollSchema = mongoose.Schema({
         type: String,
         unique: true,
       },
-
+      voters: Array,
       candidate: [
         {
           name: String,

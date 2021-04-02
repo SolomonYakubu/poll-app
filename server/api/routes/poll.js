@@ -129,7 +129,7 @@ router.post("/vote", verifyToken, async (req, res) => {
 
     const poll = await Polls.findOne({ name: pollName });
     if (poll.voters.includes(mobile_id)) {
-      return res.status(403).json({ message: "You have votec already" });
+      return res.status(403).json({ message: "You have voted already" });
     }
     const catLength = votes.categories.length;
 
@@ -144,6 +144,7 @@ router.post("/vote", verifyToken, async (req, res) => {
             .id(votes.categories[i]._id)
             .candidate.id(votes.categories[i].candidate[j]._id)
             .voters.push(mobile_id);
+          poll.categories.id(votes.categories[i]._id).voters.push(mobile_id);
         }
       }
     }
@@ -153,6 +154,21 @@ router.post("/vote", verifyToken, async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
+});
+//stats
+router.post("/stats/:poll_id", verifyToken, async (req, res) => {
+  const poll_id = req.params.poll_id;
+  try {
+    const poll = await Polls.findById(poll_id);
+    const categories = poll.categories;
+    const totalVoters = poll.voters.length;
+    const categoryStat = categories.map((item) => ({
+      name: item.name,
+      totalVoters: item.voters.length,
+      candidates: item.candidate.sort((a, b) => b.votes - a.votes),
+    }));
+    res.json({ totalVoters, categoryStat });
+  } catch (error) {}
 });
 
 //vote a candidate
