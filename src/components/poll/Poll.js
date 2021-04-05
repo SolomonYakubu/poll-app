@@ -35,8 +35,8 @@ function CreatPoll(props) {
         }
       );
       localStorage.setItem("pollName", name);
-
-      console.log(response);
+      localStorage.setItem("pollId", response.data._id);
+      console.log(response.data);
       setLoading(false);
       history.push("/create-poll");
     } catch (error) {
@@ -78,7 +78,6 @@ function CreatPoll(props) {
       }
     }
   };
-  console.log(name);
 
   return (
     <div className="poll-container">
@@ -173,7 +172,7 @@ export default function Poll(props) {
       const response = await axios({
         url: `http://localhost:3002/poll`,
         method: "DELETE",
-        data: { pollName: val },
+        data: { pollId: val },
         headers: {
           "content-type": "application/json",
           Authorization: `Bearer ${token.adminToken}`,
@@ -267,7 +266,7 @@ export default function Poll(props) {
                             }
                           );
                         }
-                        localStorage.setItem("pollName", item.name);
+                        localStorage.setItem("pollId", item._id);
                         console.log(localStorage.getItem("pollName"));
                         history.push("/create-poll");
                       }}
@@ -297,7 +296,7 @@ export default function Poll(props) {
                     <button
                       className="poll-button user"
                       style={{ background: "red" }}
-                      onClick={() => deletePoll(item.name)}
+                      onClick={() => deletePoll(item._id)}
                     >
                       Delete Poll
                     </button>
@@ -306,7 +305,7 @@ export default function Poll(props) {
                   <button
                     className="poll-button user"
                     onClick={() => {
-                      localStorage.setItem("pollName", item.name);
+                      localStorage.setItem("pollId", item._id);
                       history.push("/vote");
                     }}
                     style={{ background: " rgb(61, 187, 61)" }}

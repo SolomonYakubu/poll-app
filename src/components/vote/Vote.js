@@ -9,7 +9,7 @@ import "../style.css";
 export default function Vote(props) {
   const history = useHistory();
   const [category, setCategory] = useState([]);
-  const [categoryId, setCategoryId] = useState("");
+
   const [loading, setLoading] = useState(false);
   const token = JSON.parse(localStorage.getItem("token"));
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function Vote(props) {
     const getData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3002/poll/${localStorage.getItem("pollName")}`,
+          `http://localhost:3002/poll/${localStorage.getItem("pollId")}`,
           {
             headers: {
               Authorization: `Bearer ${token.token}`,
@@ -105,7 +105,7 @@ export default function Vote(props) {
       const response = await axios.post(
         `http://localhost:3002/poll/vote/`,
         {
-          pollName: localStorage.getItem("pollName"),
+          pollId: localStorage.getItem("pollId"),
           vote: { categories: category },
         },
         {
@@ -122,6 +122,7 @@ export default function Vote(props) {
           autoClose: 3000,
           hideProgressBar: "false",
         });
+        history.push("/stats");
       }
     } catch (error) {
       const err = error.message.split(" ")[5];
@@ -129,11 +130,12 @@ export default function Vote(props) {
       switch (err) {
         case "403":
           setLoading(false);
-          toast.error("You have already voted in this category", {
+          toast.error("You have already voted", {
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: "false",
           });
+          history.push("/stats");
           break;
         case "401":
           setLoading(false);
@@ -143,15 +145,6 @@ export default function Vote(props) {
             hideProgressBar: "false",
           });
           history.push("/");
-          break;
-
-        case "404":
-          setLoading(false);
-          toast.success("Click again to vote", {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: "false",
-          });
 
           break;
         default:
@@ -164,75 +157,6 @@ export default function Vote(props) {
       }
     }
   };
-  // const voteCandidate = async (val) => {
-  //   setLoading(true);
-  //   for (let x = 0; x < category.length; x++) {
-  //     if (category[x].candidate.map((item) => item._id).includes(val)) {
-  //       await setCategoryId(category[x]._id);
-  //       break;
-  //     }
-  //   }
-  //   console.log(categoryId);
-  //   console.log(val);
-  //   try {
-  //     const response = await axios.post(
-  //       `http://localhost:3002/poll/vote/category/${categoryId}/candidate/${val}`,
-  //       {
-  //         pollName: localStorage.getItem("pollName"),
-  //       },
-  //       {
-  //         headers: {
-  //           "content-type": "application/json",
-  //           Authorization: `Bearer ${token.token}`,
-  //         },
-  //       }
-  //     );
-
-  //     setCategory([...response.data.categories]);
-  //     setCategoryId("");
-  //     setLoading(false);
-  //     console.log(response);
-  //   } catch (error) {
-  //     const err = error.message.split(" ")[5];
-
-  //     switch (err) {
-  //       case "403":
-  //         setLoading(false);
-  //         toast.error("You have already voted in this category", {
-  //           position: "top-right",
-  //           autoClose: 3000,
-  //           hideProgressBar: "false",
-  //         });
-  //         break;
-  //       case "401":
-  //         setLoading(false);
-  //         toast.error("Session expired", {
-  //           position: "top-right",
-  //           autoClose: 3000,
-  //           hideProgressBar: "false",
-  //         });
-  //         history.push("/");
-  //         break;
-
-  //       case "404":
-  //         setLoading(false);
-  //         toast.success("Click again to vote", {
-  //           position: "top-right",
-  //           autoClose: 3000,
-  //           hideProgressBar: "false",
-  //         });
-
-  //         break;
-  //       default:
-  //         setLoading(false);
-  //         toast.error("Network error", {
-  //           position: "top-right",
-  //           autoClose: 3000,
-  //           hideProgressBar: "false",
-  //         });
-  //     }
-  //   }
-  // };
 
   return (
     <div className="poll-container">

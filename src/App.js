@@ -4,6 +4,7 @@ import LogIn from "./components/log-in/LogIn";
 import Poll from "./components/poll/Poll";
 import CreatePoll from "./components/create-poll/CreatePoll";
 import Vote from "./components/vote/Vote";
+import Stats from "./components/stats/Stats";
 import Header from "./components/header/Header";
 import { HashRouter as Router, Route } from "react-router-dom";
 
@@ -28,6 +29,9 @@ function App() {
         </Route>
         <Route path="/vote">
           <Vote />
+        </Route>
+        <Route path="/Stats">
+          <Stats />
         </Route>
       </Router>
     </div>

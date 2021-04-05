@@ -13,10 +13,11 @@ const Category = (props) => {
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState([]);
   const [name, setName] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+
   const [candidateName, setCandidateName] = useState("");
   const token = JSON.parse(localStorage.getItem("token"));
   const pollName = localStorage.getItem("pollName");
+  const pollId = localStorage.getItem("pollId");
 
   //getData on load
 
@@ -27,14 +28,13 @@ const Category = (props) => {
     const getData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3002/poll/${localStorage.getItem("pollName")}`,
+          `http://localhost:3002/poll/${pollId}`,
           {
             headers: {
               Authorization: `Bearer ${token.token}`,
             },
           }
         );
-        //eslint-disable-next-line
 
         setCategory([...response.data.categories]);
         setLoading(false);
@@ -78,7 +78,7 @@ const Category = (props) => {
         "http://localhost:3002/poll/category",
         {
           name: name,
-          pollName: pollName,
+          pollId,
         },
         {
           headers: {
@@ -123,7 +123,7 @@ const Category = (props) => {
         `http://localhost:3002/poll/candidate/${val}`,
         {
           name: candidateName,
-          pollName: pollName,
+          pollId,
         },
         {
           headers: {
@@ -159,28 +159,18 @@ const Category = (props) => {
     }
     console.log(val);
   };
-  const deleteCandidate = async (val) => {
-    for (let x = 0; x < category.length; x++) {
-      const cat_id = category[x];
-
-      for (let y = 0; y < cat_id.candidate.length; y++) {
-        //eslint-disable-next-line
-        if (cat_id.candidate[y]._id == val) {
-          setCategoryId(category[x]._id);
-        }
-      }
-    }
+  const deleteCandidate = async (candidate_id, category_id) => {
     try {
       const response = await axios({
-        url: `http://localhost:3002/poll/category/${categoryId}/candidate/${val}`,
+        url: `http://localhost:3002/poll/category/${category_id}/candidate/${candidate_id}`,
         method: "DELETE",
-        data: { pollName: pollName },
+        data: { pollId },
         headers: {
           "content-type": "application/json",
           Authorization: `Bearer ${token.adminToken}`,
         },
       });
-      setCategoryId("");
+
       setCategory([...response.data.categories]);
       console.log(response);
     } catch (error) {
@@ -226,14 +216,14 @@ const Category = (props) => {
               </p>
               <div className="create-poll-candidate-div">
                 <p className="create-poll-candidate-label">Candidates:</p>
-                {item.candidate.map((item) => (
+                {item.candidate.map((obj) => (
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                     }}
-                    key={item._id}
+                    key={obj._id}
                   >
                     <p
                       style={{
@@ -242,7 +232,7 @@ const Category = (props) => {
                         marginLeft: "20px",
                       }}
                     >
-                      {item.name}
+                      {obj.name}
                     </p>
                     <button
                       style={{
@@ -256,8 +246,7 @@ const Category = (props) => {
                         color: "#fff",
                         outline: "none",
                       }}
-                      value={item._id}
-                      onClick={(e) => deleteCandidate(e.target.value)}
+                      onClick={() => deleteCandidate(obj._id, item._id)}
                     >
                       x
                     </button>
@@ -276,7 +265,6 @@ const Category = (props) => {
                   onChange={(e) => onCandidateNameChange(e.target.value)}
                 />
                 <button
-                  value={item._id}
                   className="poll-create-poll-btn"
                   style={{
                     marginTop: 0,
@@ -284,7 +272,7 @@ const Category = (props) => {
                     float: "right",
                     borderRadius: "0",
                   }}
-                  onClick={(e) => addCandidate(e.target.value)}
+                  onClick={() => addCandidate(item._id)}
                 >
                   Add Candidate
                 </button>

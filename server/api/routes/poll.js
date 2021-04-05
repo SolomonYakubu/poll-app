@@ -7,9 +7,9 @@ const verifyAdminToken = require("../auth/adminAuth");
 const Polls = require("../models/polls");
 
 const checkDeadline = async (req, res, next) => {
-  const pollName = req.params.name;
+  const pollId = req.params.id;
   try {
-    const poll = await Polls.findOne({ name: pollName });
+    const poll = await Polls.findById(pollId);
     const deadline = poll.deadline;
     if (new Date(deadline) < new Date()) {
       return res.status(405).json({ message: "poll Expired" });
@@ -32,10 +32,10 @@ router.get("/", async (req, res) => {
   }
 });
 //get poll by name
-router.get("/:name", [verifyToken, checkDeadline], async (req, res) => {
-  const pollName = req.params.name;
+router.get("/:id", [verifyToken, checkDeadline], async (req, res) => {
+  const pollId = req.params.id;
   try {
-    const poll = await Polls.findOne({ name: pollName });
+    const poll = await Polls.findById(pollId);
     if (!poll) {
       res.sendStatus(404);
     }
@@ -46,9 +46,9 @@ router.get("/:name", [verifyToken, checkDeadline], async (req, res) => {
 });
 // Create a new Poll
 router.post("/", verifyAdminToken, async (req, res) => {
-  if (await Polls.findOne({ name: req.body.name })) {
-    return res.status(406).json({ message: "Poll already exist" });
-  }
+  // if (await Polls.findOne({ name: req.body.name })) {
+  //   return res.status(406).json({ message: "Poll already exist" });
+  // }
   if (req.body.name == "") {
     return res.status(400).json({ message: "Bad request" });
   }
@@ -67,13 +67,17 @@ router.post("/", verifyAdminToken, async (req, res) => {
 //Register a new category
 router.post("/category", verifyAdminToken, async (req, res) => {
   const name = req.body.name;
-  const pollName = req.body.pollName;
+  const pollId = req.body.pollId;
+
+  if (req.body.name == "") {
+    return res.status(400).json({ message: "Bad request" });
+  }
   try {
-    const poll = await Polls.findOne({ name: pollName });
+    const poll = await Polls.findById(pollId);
 
     const nameArr = poll.categories.map((item) => item.name);
     const isDuplicate = nameArr.includes(name) ? true : false;
-    console.log(isDuplicate);
+
     if (isDuplicate) {
       return res.status(406).json({ message: "category already exist" });
     }
@@ -87,7 +91,7 @@ router.post("/category", verifyAdminToken, async (req, res) => {
 // Register a new candidate
 router.post("/candidate/:category_id", verifyAdminToken, async (req, res) => {
   const name = req.body.name;
-  const pollName = req.body.pollName;
+  const pollId = req.body.pollId;
 
   const category_id = req.params.category_id;
   const data = {
@@ -95,12 +99,11 @@ router.post("/candidate/:category_id", verifyAdminToken, async (req, res) => {
   };
 
   try {
-    const poll = await Polls.findOne({ name: pollName });
+    const poll = await Polls.findById(pollId);
     const nameArr = poll.categories
       .filter((item) => item._id == category_id)[0]
       .candidate.map((item) => item.name);
 
-    console.log(nameArr);
     const isDuplicate = nameArr.includes(name) ? true : false;
     console.log(isDuplicate);
     if (isDuplicate) {
@@ -118,16 +121,16 @@ router.post("/candidate/:category_id", verifyAdminToken, async (req, res) => {
 //The new vote a candidate
 
 router.post("/vote", verifyToken, async (req, res) => {
-  const pollName = req.body.pollName;
+  const pollId = req.body.pollId;
   const mobile_id = req.data.mobile_id;
   const votes = req.body.vote;
   console.log(votes);
   try {
-    if (!(await Polls.findOne({ name: pollName }))) {
+    if (!(await Polls.findById(pollId))) {
       return res.status(404).json({ message: "Poll not found" });
     }
 
-    const poll = await Polls.findOne({ name: pollName });
+    const poll = await Polls.findById(pollId);
     if (poll.voters.includes(mobile_id)) {
       return res.status(403).json({ message: "You have voted already" });
     }
@@ -156,10 +159,13 @@ router.post("/vote", verifyToken, async (req, res) => {
   }
 });
 //stats
-router.post("/stats/:poll_id", verifyToken, async (req, res) => {
-  const poll_id = req.params.poll_id;
+router.get("/stats/:pollId", verifyToken, async (req, res) => {
+  const pollId = req.params.pollId;
   try {
-    const poll = await Polls.findById(poll_id);
+    const poll = await Polls.findById(pollId);
+    if (!poll) {
+      return res.sendStatus(404);
+    }
     const categories = poll.categories;
     const totalVoters = poll.voters.length;
     const categoryStat = categories.map((item) => ({
@@ -214,10 +220,10 @@ router.delete(
   async (req, res) => {
     const category_id = req.params.category_id;
     const candidate_id = req.params.candidate_id;
-    const pollName = req.body.pollName;
+    const pollId = req.body.pollId;
 
     try {
-      const poll = await Polls.findOne({ name: pollName });
+      const poll = await Polls.findById(pollId);
 
       // const filter = poll.categories
       //   .id(category_id) //eslint-disable-next-line
@@ -238,9 +244,9 @@ router.delete(
 //delete a category
 router.delete("/category/:category_id", verifyAdminToken, async (req, res) => {
   const category_id = req.params.category_id;
-  const pollName = req.body.pollName;
+  const pollId = req.body.pollId;
   try {
-    const poll = await Polls.findOne({ name: pollName });
+    const poll = await Polls.findById(pollId);
     poll.categories.id(category_id).remove();
     poll.save();
     res.json(poll);
@@ -252,10 +258,10 @@ router.delete("/category/:category_id", verifyAdminToken, async (req, res) => {
 
 //delete a poll
 router.delete("/", verifyAdminToken, async (req, res) => {
-  const pollName = req.body.pollName;
+  const pollId = req.body.pollId;
 
   try {
-    const poll = await Polls.findOne({ name: pollName });
+    const poll = await Polls.findById(pollId);
     if (!poll) {
       return res.sendStatus(404);
     }
