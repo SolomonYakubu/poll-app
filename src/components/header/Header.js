@@ -8,12 +8,14 @@ export default function Header() {
   const history = useHistory();
   return (
     <>
-      <Navbar bg="light" expand="lg" style={{ background: "#282c34" }}>
-        <Navbar.Brand href="#home">CYON Odo-aofin Kabba</Navbar.Brand>
+      <Navbar color="#fff" bg="dark" expand="lg" style={{ color: "#FFF" }}>
+        <Navbar.Brand href="#home" bg="light">
+          <div style={{ color: "#fff" }}>Poll Master</div>
+        </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mr-auto">
-            <Nav.Link href="#home">Home</Nav.Link>
+            <Nav.Link href="/">Home</Nav.Link>
             <Nav.Link href="#link">Link</Nav.Link>
             <NavDropdown title="Dropdown" id="basic-nav-dropdown">
               <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>

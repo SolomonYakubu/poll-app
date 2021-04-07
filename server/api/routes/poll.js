@@ -138,6 +138,9 @@ router.post("/vote", verifyToken, async (req, res) => {
 
     for (let i = 0; i < catLength; i++) {
       const canLength = votes.categories[i].candidate.length;
+      if (poll.categories[i].voters.includes(mobile_id)) {
+        continue;
+      }
       for (let j = 0; j < canLength; j++) {
         if (votes.categories[i].candidate[j].voted) {
           poll.categories
@@ -174,7 +177,9 @@ router.get("/stats/:pollId", verifyToken, async (req, res) => {
       candidates: item.candidate.sort((a, b) => b.votes - a.votes),
     }));
     res.json({ totalVoters, categoryStat });
-  } catch (error) {}
+  } catch (error) {
+    res.json({ message: error.message });
+  }
 });
 
 //vote a candidate

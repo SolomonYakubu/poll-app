@@ -28,7 +28,7 @@ const Category = (props) => {
     const getData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3002/poll/${pollId}`,
+          `http://192.168.43.244:3002/poll/${pollId}`,
           {
             headers: {
               Authorization: `Bearer ${token.token}`,
@@ -75,7 +75,7 @@ const Category = (props) => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:3002/poll/category",
+        "http://192.168.43.244:3002/poll/category",
         {
           name: name,
           pollId,
@@ -120,7 +120,7 @@ const Category = (props) => {
     setLoading(true);
     try {
       const response = await axios.post(
-        `http://localhost:3002/poll/candidate/${val}`,
+        `http://192.168.43.244:3002/poll/candidate/${val}`,
         {
           name: candidateName,
           pollId,
@@ -162,7 +162,7 @@ const Category = (props) => {
   const deleteCandidate = async (candidate_id, category_id) => {
     try {
       const response = await axios({
-        url: `http://localhost:3002/poll/category/${category_id}/candidate/${candidate_id}`,
+        url: `http://192.168.43.244:3002/poll/category/${category_id}/candidate/${candidate_id}`,
         method: "DELETE",
         data: { pollId },
         headers: {
@@ -186,9 +186,9 @@ const Category = (props) => {
           <Ring />
         </p>
       ) : null}
-      <div className="poll-body">
+      <div className="poll-body" style={{ background: "none", width: "95%" }}>
         <h2 className="create-poll-label heading">
-          Poll Name: {localStorage.getItem("pollName")}
+          {localStorage.getItem("pollName")}
         </h2>
         <button
           className="poll-create-poll-btn"
@@ -197,25 +197,29 @@ const Category = (props) => {
         >
           Done
         </button>
-        <div style={{ display: "flex", flexDirection: "column-reverse" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column-reverse",
+          }}
+        >
           {category.map((item) => (
             <div className="create-poll-category" key={item._id}>
-              <p
+              <div
                 className="create-poll-label sub-heading"
                 style={{
-                  textDecoration: "none",
                   marginBottom: 0,
-                  background: "#000",
-                  color: "#fff",
+
+                  color: "#090909",
                   fontSize: "18px",
                   marginLeft: 0,
-                  padding: "10px",
+                  // padding: "10px",
                 }}
               >
-                Category: {item.name}
-              </p>
+                {item.name}
+              </div>
               <div className="create-poll-candidate-div">
-                <p className="create-poll-candidate-label">Candidates:</p>
+                <p className="create-poll-candidate-label">Candidates</p>
                 {item.candidate.map((obj) => (
                   <div
                     style={{
@@ -237,14 +241,16 @@ const Category = (props) => {
                     <button
                       style={{
                         marginRight: "20px",
-                        width: "20px",
-                        height: "20px",
+                        width: "25px",
+                        height: "25px",
                         borderRadius: "50%",
+
                         textAlign: "center",
                         border: "none",
-                        background: "rgb(255, 60, 11)",
+                        background: "#ff0063",
                         color: "#fff",
                         outline: "none",
+                        fontWeight: "bold",
                       }}
                       onClick={() => deleteCandidate(obj._id, item._id)}
                     >
@@ -289,6 +295,10 @@ const Category = (props) => {
               boxSizing: "border-box",
               width: "100%",
               marginRight: 0,
+              background: "#fff",
+              padding: "15px",
+              borderRadius: "7px",
+              marginBottom: "30px",
             }}
           >
             <input

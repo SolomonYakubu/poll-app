@@ -19,7 +19,7 @@ export default function LogIn() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:3002/user/log-in",
+        "http://192.168.43.244:3002/user/log-in",
         {
           mobile_id: number,
         },
@@ -76,7 +76,7 @@ export default function LogIn() {
       <ToastContainer limit={1} />
       <form className="register-form" onSubmit={handleSubmit.bind(this)}>
         <div className="register-form-div">
-          <h2 style={{ color: "#5f5f5f" }}>Log In</h2>
+          <h2 style={{ color: "#5f5f5f" }}>Login</h2>
 
           <input
             type="number"
@@ -87,7 +87,7 @@ export default function LogIn() {
           />
           <input
             type="submit"
-            value="Log In"
+            value="Login"
             className="register-button input"
           />
         </div>

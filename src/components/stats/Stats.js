@@ -14,7 +14,7 @@ export default function Stats() {
     const getData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3002/poll/stats/${pollId}`,
+          `http://192.168.43.244:3002/poll/stats/${pollId}`,
           {
             headers: {
               Authorization: `Bearer ${token.token}`,
@@ -59,7 +59,15 @@ export default function Stats() {
     dataToRender = (
       <>
         <div className="stats-voters-count-div">
-          <div style={{ color: "#696969" }}>Votes</div>
+          <div
+            style={{
+              color: "#696969",
+              fontSize: "17px",
+              fontFamily: "poppins",
+            }}
+          >
+            Votes
+          </div>
           <div style={{ fontWeight: 600, fontSize: "50px" }}>
             {data.totalVoters}
           </div>
@@ -72,22 +80,51 @@ export default function Stats() {
                 <div
                   style={{
                     display: "flex",
-                    width: "90%",
+                    flexDirection: "column",
+                    width: "92%",
                     justifyContent: "space-between",
                     alignItems: "flex-start",
-                    paddingLeft: "20px",
+                    padding: "10px",
+                    alignSelf: "center",
                     margin: "10px",
+                    borderStyle: "solid",
+                    borderColor: "#f4f4f4",
+                    borderRadius: "5px",
+                    borderWidth: "2px",
                   }}
                 >
-                  <div>{obj.name}</div>
-                  <div style={{ display: "flex" }}>
+                  <div style={{ marginRight: "2px" }}>{obj.name}</div>
+                  <div
+                    style={{
+                      display: "flex",
+                      marginLeft: "4px",
+                      justifyContent: "flex-start",
+                      width: "100%",
+                    }}
+                  >
                     <progress
                       value={`${(obj.votes / item.totalVoters) * 100}`}
                       max="100"
+                      style={{
+                        width: "80%",
+                        borderWidth: "3px",
+                        alignSelf: "start",
+                        float: "left",
+                        backgroundColor: "#eee",
+                        borderRadius: "2px",
+                        boxShadow: "0 2px 5px rgba(0,0,0,0.25) inset",
+                        marginLeft: 0,
+                      }}
                     >
                       {(obj.votes / item.totalVoters) * 100}
                     </progress>
-                    <div style={{ fontSize: "11px", marginLeft: "10px" }}>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        marginLeft: "10px",
+                        color: "#696969",
+                      }}
+                    >
                       {((obj.votes / item.totalVoters) * 100).toFixed(2)}%
                     </div>
                   </div>
@@ -105,9 +142,11 @@ export default function Stats() {
       <h1
         style={{
           color: "#fff",
-          background: "rgb(61, 187, 61)",
+          background: "#50c878",
           width: "90%",
           borderRadius: "5px",
+          marginTop: "15px",
+          fontFamily: "poppins",
         }}
       >
         Statistics

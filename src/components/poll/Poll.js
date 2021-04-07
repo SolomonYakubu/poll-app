@@ -22,7 +22,7 @@ function CreatPoll(props) {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:3002/poll",
+        "http://192.168.43.244:3002/poll",
         {
           name: name,
           deadline: date,
@@ -134,7 +134,7 @@ export default function Poll(props) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3002/poll");
+      const response = await axios.get("http://192.168.43.244:3002/poll");
       setLoading(false);
       setPoll(response.data);
     } catch (error) {
@@ -170,7 +170,7 @@ export default function Poll(props) {
     setLoading(true);
     try {
       const response = await axios({
-        url: `http://localhost:3002/poll`,
+        url: `http://192.168.43.244:3002/poll`,
         method: "DELETE",
         data: { pollId: val },
         headers: {
@@ -205,54 +205,69 @@ export default function Poll(props) {
               }
               setPollCreated(true);
             }}
+            style={{ background: "#50c878" }}
           >
             {" "}
             Create Poll
           </button>
         ) : null}
-        <h2 style={{ color: "#fff" }}>Polls</h2>
+        <h4 style={{ color: "#36454f", marginTop: "20px" }}>Select a poll</h4>
         <div
-          className="poll-body"
           style={{
+            display: "flex",
+            // padding: "20px",
             flexDirection: "column-reverse",
-
-            width: "95%",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
           }}
         >
           {poll.map((item) => (
-            <div key={item._id} style={{ width: "95%" }}>
-              <div className="poll-user-div">
+            <div
+              key={item._id}
+              style={{
+                width: "90%",
+                padding: "25px",
+                background: "#fff",
+                marginTop: "20px",
+                borderRadius: "7px",
+              }}
+            >
+              <div>
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center",
-                    background: "#000",
+                    // alignItems: "center",
+
                     color: "#fff",
-                    width: "100%",
-                    height: "50px",
+                    width: "auto",
+                    height: "auto",
                   }}
                 >
-                  <p style={{ marginLeft: "10px", fontSize: "18px" }}>
-                    Poll: {item.name}
-                  </p>
+                  <div
+                    style={{
+                      // marginLeft: "10px",
+                      fontSize: "16px",
+                      fontFamily: "Poppins",
+                      color: "#36454f",
+                    }}
+                  >
+                    {item.name}
+                  </div>
                   {new Date(item.deadline) < new Date() ? (
-                    <p style={{ color: "red" }}>Expired</p>
-                  ) : null}
-                  {new Date(item.deadline) < new Date() ? (
-                    <button
-                      className="poll-create-poll-btn"
+                    <p
                       style={{
-                        height: "25px",
-                        padding: "3px",
-                        marginRight: 0,
-                        marginTop: 0,
-                        borderRadius: 0,
+                        color: "red",
+                        fontWeight: "200",
+                        fontSize: "12px",
                       }}
                     >
-                      view stats
-                    </button>
-                  ) : token.adminToken ? (
+                      Expired
+                    </p>
+                  ) : null}
+                  {new Date(item.deadline) <
+                  new Date() ? null : token.adminToken ? (
                     <button
                       className="poll-create-poll-btn"
                       onClick={() => {
@@ -271,19 +286,25 @@ export default function Poll(props) {
                         history.push("/create-poll");
                       }}
                       style={{
-                        height: "25px",
-                        padding: "3px",
+                        // height: "25px",
+                        padding: "5px",
                         marginRight: 0,
                         marginTop: 0,
-                        borderRadius: 0,
-                        background: "blue",
+                        borderRadius: "7px",
+                        background: "#ff0063",
                       }}
                     >
                       Edit
                     </button>
                   ) : null}
                 </div>
-                <p>
+                <p
+                  style={{
+                    fontSize: "15px",
+                    fontFamily: "Poppins",
+                    color: "#36454f",
+                  }}
+                >
                   Deadline:{" "}
                   {item.deadline.split("T")[0].split("-").reverse().join("/") +
                     " " +
@@ -292,10 +313,38 @@ export default function Poll(props) {
                     "GMT"}
                 </p>
                 {new Date(item.deadline) < new Date() ? (
+                  <button
+                    className="poll-button user"
+                    style={{
+                      padding: "5px",
+                      marginRight: 0,
+                      marginTop: 0,
+                      borderRadius: "7px",
+                      width: "100%",
+                      background: "#ff0063",
+                    }}
+                    onClick={() => {
+                      localStorage.setItem("pollId", item._id);
+                      history.push("/stats");
+                    }}
+                  >
+                    View Stats
+                  </button>
+                ) : null}
+                {new Date(item.deadline) < new Date() ? (
                   token.adminToken ? (
                     <button
                       className="poll-button user"
-                      style={{ background: "red" }}
+                      style={{
+                        // background: "red",
+                        marginTop: "20px",
+                        padding: "5px",
+                        marginRight: 0,
+
+                        borderRadius: "7px",
+                        width: "100%",
+                        background: "#36454f",
+                      }}
                       onClick={() => deletePoll(item._id)}
                     >
                       Delete Poll
@@ -306,9 +355,14 @@ export default function Poll(props) {
                     className="poll-button user"
                     onClick={() => {
                       localStorage.setItem("pollId", item._id);
+                      localStorage.setItem("pollName", item.name);
                       history.push("/vote");
                     }}
-                    style={{ background: " rgb(61, 187, 61)" }}
+                    style={{
+                      background: "#50c878",
+                      padding: "5px",
+                      borderRadius: "5px",
+                    }}
                   >
                     Enter Poll
                   </button>

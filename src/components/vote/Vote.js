@@ -9,7 +9,7 @@ import "../style.css";
 export default function Vote(props) {
   const history = useHistory();
   const [category, setCategory] = useState([]);
-
+  const [data, setData] = useState();
   const [loading, setLoading] = useState(false);
   const token = JSON.parse(localStorage.getItem("token"));
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function Vote(props) {
     const getData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3002/poll/${localStorage.getItem("pollId")}`,
+          `http://192.168.43.244:3002/poll/${localStorage.getItem("pollId")}`,
           {
             headers: {
               Authorization: `Bearer ${token.token}`,
@@ -33,6 +33,7 @@ export default function Vote(props) {
           });
           setTimeout(() => history.push("/poll"), 3000);
         }
+        setData(response.data);
         setCategory([...response.data.categories]);
         setLoading(false);
       } catch (error) {
@@ -103,7 +104,7 @@ export default function Vote(props) {
 
     try {
       const response = await axios.post(
-        `http://localhost:3002/poll/vote/`,
+        `http://192.168.43.244:3002/poll/vote/`,
         {
           pollId: localStorage.getItem("pollId"),
           vote: { categories: category },
@@ -158,35 +159,40 @@ export default function Vote(props) {
     }
   };
 
+  let btn;
+  if (data) {
+    btn = data.voters.includes(token.mobile_id) ? "View Stats" : "Submit";
+  }
   return (
     <div className="poll-container">
       {loading ? <Loader style={{ position: "fixed" }} /> : null}
-      <h3
+      <h5
         style={{
-          alignSelf: "flex-start",
-          marginLeft: "20px",
-          color: "#fff",
-          fontSize: "18px",
-          borderBottomStyle: "solid",
-          borderWidth: "5px",
-          padding: "5px",
+          alignSelf: "start",
+          margin: "20px",
+          marginTop: "30px",
+          fontWeight: "300",
+          color: "#36454f",
         }}
       >
-        Poll Name: {localStorage.getItem("pollName")}
-      </h3>
+        {localStorage.getItem("pollName")}
+      </h5>
       <ToastContainer limit={1} />
       <div
-        className="poll-body"
         style={{
+          display: "flex",
+          flexDirection: "column",
           justifyContent: "center",
           alignSelf: "center",
           marginTop: "40px",
           borderRadius: 0,
+          width: "90%",
+          boxSizing: "border-box",
         }}
       >
         {category.map((item) => (
           <div className="create-poll-candidate-div" key={item._id}>
-            <p className="create-poll-candidate-label">Category: {item.name}</p>
+            <p className="create-poll-candidate-label">{item.name}</p>
 
             {item.candidate.map((obj) => (
               <div
@@ -207,7 +213,7 @@ export default function Vote(props) {
                 >
                   {obj.name}
                 </div>
-                <p style={{ marginRight: "20px" }}>Votes: {obj.votes}</p>
+
                 <button
                   style={{
                     marginRight: "20px",
@@ -217,17 +223,22 @@ export default function Vote(props) {
                     textAlign: "center",
                     border: "none",
                     //background: "rgb(61, 187, 61)",
+                    // background: "#f4f4f4",
                     color: "#fff",
                     outline: "none",
                   }}
                   className={
                     obj.voted || obj.voters.includes(token.mobile_id)
                       ? "green"
-                      : "yellow"
+                      : "grey"
                   }
                   // key={item._id}
                   // value={item._id}
-                  onClick={() => vote(obj._id, item._id)}
+                  onClick={
+                    item.voters.includes(token.mobile_id)
+                      ? null
+                      : () => vote(obj._id, item._id)
+                  }
                 >
                   <FontAwesomeIcon icon={faCheck} />
                 </button>
@@ -237,9 +248,10 @@ export default function Vote(props) {
         ))}
         <button
           className="poll-create-poll-btn"
+          style={{ width: "100%", alignSelf: "center", background: " #50c878" }}
           onClick={() => voteCandidate()}
         >
-          Done
+          {btn}
         </button>
       </div>
     </div>
