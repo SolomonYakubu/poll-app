@@ -26,20 +26,41 @@ router.get("/", async (req, res) => {
     if (polls == 0) {
       return res.status(404).json({ message: "No polls found" });
     }
-    res.json(polls);
+    const data = polls.map((item) => ({
+      name: item.name,
+      _id: item._id,
+      deadline: item.deadline,
+    }));
+    res.json(data);
   } catch (error) {
     res.json({ message: error.message });
   }
 });
-//get poll by name
+//get poll by id
 router.get("/:id", [verifyToken, checkDeadline], async (req, res) => {
   const pollId = req.params.id;
+  const mobile_id = req.data.mobile_id;
   try {
     const poll = await Polls.findById(pollId);
     if (!poll) {
       res.sendStatus(404);
     }
-    res.json(poll);
+    const data = {
+      name: poll.name,
+      _id: poll._id,
+      voted: poll.voters.includes(mobile_id) ? true : false,
+      categories: poll.categories.map((item) => ({
+        name: item.name,
+        _id: item._id,
+        voted: item.voters.includes(mobile_id) ? true : false,
+        candidate: item.candidate.map((obj) => ({
+          name: obj.name,
+          _id: obj._id,
+          voted: obj.voters.includes(mobile_id) ? true : false,
+        })),
+      })),
+    };
+    res.json(data);
   } catch (error) {
     res.json({ message: error.message });
   }
@@ -72,6 +93,7 @@ router.post("/category", verifyAdminToken, async (req, res) => {
   if (req.body.name == "") {
     return res.status(400).json({ message: "Bad request" });
   }
+
   try {
     const poll = await Polls.findById(pollId);
 
@@ -82,8 +104,22 @@ router.post("/category", verifyAdminToken, async (req, res) => {
       return res.status(406).json({ message: "category already exist" });
     }
     poll.categories.push({ name });
-    poll.save();
-    res.status(201).json(poll);
+    const newPoll = await poll.save();
+    const newCategory = {
+      name: newPoll.name,
+      _id: newPoll._id,
+
+      categories: newPoll.categories.map((item) => ({
+        name: item.name,
+        _id: item._id,
+
+        candidate: item.candidate.map((obj) => ({
+          name: obj.name,
+          _id: obj._id,
+        })),
+      })),
+    };
+    res.status(201).json(newCategory);
   } catch (error) {
     res.json({ message: error.message });
   }
@@ -111,52 +147,66 @@ router.post("/candidate/:category_id", verifyAdminToken, async (req, res) => {
     }
     poll.categories.id(category_id).candidate.push(data);
 
-    const newCandidate = await poll.save();
+    poll.save();
 
-    res.status(201).json(newCandidate);
+    const newPoll = {
+      name: poll.name,
+      _id: poll._id,
+
+      categories: poll.categories.map((item) => ({
+        name: item.name,
+        _id: item._id,
+
+        candidate: item.candidate.map((obj) => ({
+          name: obj.name,
+          _id: obj._id,
+        })),
+      })),
+    };
+    res.sendStatus(201).json(newPoll);
   } catch (error) {
     res.json({ message: error.message });
   }
 });
 //The new vote a candidate
-
 router.post("/vote", verifyToken, async (req, res) => {
   const pollId = req.body.pollId;
+  const vote = req.body.vote;
   const mobile_id = req.data.mobile_id;
-  const votes = req.body.vote;
-  console.log(votes);
   try {
     if (!(await Polls.findById(pollId))) {
-      return res.status(404).json({ message: "Poll not found" });
+      res.sendStatus(404);
     }
-
     const poll = await Polls.findById(pollId);
     if (poll.voters.includes(mobile_id)) {
-      return res.status(403).json({ message: "You have voted already" });
+      return res.sendStatus(400);
     }
-    const catLength = votes.categories.length;
-
-    for (let i = 0; i < catLength; i++) {
-      const canLength = votes.categories[i].candidate.length;
+    const categoryLength = vote.categories.length;
+    for (let i = 0; i < categoryLength; i++) {
       if (poll.categories[i].voters.includes(mobile_id)) {
-        continue;
+        return res.sendStatus(400);
       }
-      for (let j = 0; j < canLength; j++) {
-        if (votes.categories[i].candidate[j].voted) {
+      const candidateLength = vote.categories[i].candidate.length;
+      for (let j = 0; j < candidateLength; j++) {
+        if (vote.categories[i].candidate[j].voted) {
+          //all actions for categories
+          poll.categories.id(vote.categories[i]._id).voters.push(mobile_id);
+          poll.categories.id(vote.categories[i]._id).votes++;
+          //all actions for candidates
           poll.categories
-            .id(votes.categories[i]._id)
-            .candidate.id(votes.categories[i].candidate[j]._id).votes++;
-          poll.categories
-            .id(votes.categories[i]._id)
-            .candidate.id(votes.categories[i].candidate[j]._id)
+            .id(vote.categories[i]._id)
+            .candidate.id(vote.categories[i].candidate[j]._id)
             .voters.push(mobile_id);
-          poll.categories.id(votes.categories[i]._id).voters.push(mobile_id);
+          poll.categories
+            .id(vote.categories[i]._id)
+            .candidate.id(vote.categories[i].candidate[j]._id).votes++;
         }
       }
     }
     poll.voters.push(mobile_id);
+    poll.votes++;
     poll.save();
-    res.json(poll);
+    res.sendStatus(200);
   } catch (error) {
     res.json({ message: error.message });
   }
@@ -170,10 +220,11 @@ router.get("/stats/:pollId", verifyToken, async (req, res) => {
       return res.sendStatus(404);
     }
     const categories = poll.categories;
-    const totalVoters = poll.voters.length;
+    const totalVoters = poll.votes;
     const categoryStat = categories.map((item) => ({
       name: item.name,
-      totalVoters: item.voters.length,
+      _id: item._id,
+      totalVoters: item.votes,
       candidates: item.candidate.sort((a, b) => b.votes - a.votes),
     }));
     res.json({ totalVoters, categoryStat });
@@ -182,42 +233,6 @@ router.get("/stats/:pollId", verifyToken, async (req, res) => {
   }
 });
 
-//vote a candidate
-router.post(
-  "/vote/category/:category_id/candidate/:candidate_id",
-  verifyToken,
-  async (req, res) => {
-    const pollName = req.body.pollName;
-    const mobile_id = req.data.mobile_id;
-    const candidate_id = req.params.candidate_id;
-    const category_id = req.params.category_id;
-    console.log(candidate_id, candidate_id);
-    try {
-      if (!(await Polls.findOne({ name: pollName }))) {
-        return res.status(404).json({ message: "Poll not found" });
-      }
-
-      const poll = await Polls.findOne({ name: pollName });
-
-      if (await poll.categories.id(category_id).voters.includes(mobile_id)) {
-        return res
-          .status(403)
-          .json({ message: "You have already voted in this category" });
-      }
-      poll.categories.id(category_id).candidate.id(candidate_id).votes++;
-      poll.categories.id(category_id).voters.push(mobile_id);
-      poll.categories
-        .id(category_id)
-        .candidate.id(candidate_id)
-        .voters.push(mobile_id);
-      poll.save();
-
-      res.json(poll);
-    } catch (error) {
-      res.json({ message: error.message });
-    }
-  }
-);
 //delete a candidate
 router.delete(
   "/category/:category_id/candidate/:candidate_id",
@@ -239,8 +254,22 @@ router.delete(
       // poll.categories.id(category_id).candidate = filter;
       poll.categories.id(category_id).candidate.id(candidate_id).remove();
       poll.save();
-      console.log(poll);
-      res.json(poll);
+
+      const newPoll = {
+        name: poll.name,
+        _id: poll._id,
+
+        categories: poll.categories.map((item) => ({
+          name: item.name,
+          _id: item._id,
+
+          candidate: item.candidate.map((obj) => ({
+            name: obj.name,
+            _id: obj._id,
+          })),
+        })),
+      };
+      res.json(newPoll);
     } catch (error) {
       res.json({ message: error.message });
     }
@@ -254,8 +283,21 @@ router.delete("/category/:category_id", verifyAdminToken, async (req, res) => {
     const poll = await Polls.findById(pollId);
     poll.categories.id(category_id).remove();
     poll.save();
-    res.json(poll);
-    console.log(poll);
+    const newPoll = {
+      name: poll.name,
+      _id: poll._id,
+
+      categories: poll.categories.map((item) => ({
+        name: item.name,
+        _id: item._id,
+
+        candidate: item.candidate.map((obj) => ({
+          name: obj.name,
+          _id: obj._id,
+        })),
+      })),
+    };
+    res.json(newPoll);
   } catch (error) {
     res.json({ message: error.message });
   }
@@ -272,7 +314,12 @@ router.delete("/", verifyAdminToken, async (req, res) => {
     }
     poll.remove();
     poll.save();
-    res.json(poll);
+    const data = poll.map((item) => ({
+      name: item.name,
+      _id: item._id,
+      deadline: item.deadline,
+    }));
+    res.json(data);
   } catch (error) {
     res.json({ message: error.message });
   }

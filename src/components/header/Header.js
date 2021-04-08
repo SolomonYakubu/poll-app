@@ -4,7 +4,7 @@ import { useHistory } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 export default function Header() {
   const token = JSON.parse(localStorage.getItem("token"));
-  console.log(token);
+
   const history = useHistory();
   return (
     <>

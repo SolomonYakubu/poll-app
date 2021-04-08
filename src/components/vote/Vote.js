@@ -3,18 +3,18 @@ import { toast, ToastContainer } from "react-toastify";
 import { useHistory } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
-import Loader from "../loader/Loader";
+
 import axios from "axios";
 import "../style.css";
 export default function Vote(props) {
   const history = useHistory();
   const [category, setCategory] = useState([]);
   const [data, setData] = useState();
-  const [loading, setLoading] = useState(false);
+
   const token = JSON.parse(localStorage.getItem("token"));
   useEffect(() => {
-    setLoading(true);
     const getData = async () => {
+      props.load(true);
       try {
         const response = await axios.get(
           `http://192.168.43.244:3002/poll/${localStorage.getItem("pollId")}`,
@@ -35,12 +35,12 @@ export default function Vote(props) {
         }
         setData(response.data);
         setCategory([...response.data.categories]);
-        setLoading(false);
+        props.load(false);
       } catch (error) {
         const err = error.message.split(" ")[5];
+        props.load(false);
         switch (err) {
           case "401":
-            setLoading(false);
             toast.error("Session expired", {
               position: "top-right",
               autoClose: 3000,
@@ -49,17 +49,7 @@ export default function Vote(props) {
             history.push("/");
             break;
 
-          case "404":
-            setLoading(false);
-            toast.success("Click again to vote", {
-              position: "top-right",
-              autoClose: 3000,
-              hideProgressBar: "false",
-            });
-
-            break;
           case "405":
-            setLoading(false);
             toast.success("Poll Expired", {
               position: "top-right",
               autoClose: 3000,
@@ -68,7 +58,6 @@ export default function Vote(props) {
             history.push("/poll");
             break;
           default:
-            setLoading(false);
             toast.error("Network error", {
               position: "top-right",
               autoClose: 3000,
@@ -100,7 +89,10 @@ export default function Vote(props) {
     setCategory([...newCategory]);
   };
   const voteCandidate = async () => {
-    setLoading(true);
+    props.load(true);
+    if (data.voted) {
+      return history.push("/stats");
+    }
 
     try {
       const response = await axios.post(
@@ -117,7 +109,7 @@ export default function Vote(props) {
         }
       );
       if (response.status === 200) {
-        setLoading(false);
+        props.load(false);
         toast.success("You have voted successfully", {
           position: "top-right",
           autoClose: 3000,
@@ -127,10 +119,10 @@ export default function Vote(props) {
       }
     } catch (error) {
       const err = error.message.split(" ")[5];
-
+      console.log(error);
+      props.load(false);
       switch (err) {
         case "403":
-          setLoading(false);
           toast.error("You have already voted", {
             position: "top-right",
             autoClose: 3000,
@@ -139,7 +131,6 @@ export default function Vote(props) {
           history.push("/stats");
           break;
         case "401":
-          setLoading(false);
           toast.error("Session expired", {
             position: "top-right",
             autoClose: 3000,
@@ -149,7 +140,6 @@ export default function Vote(props) {
 
           break;
         default:
-          setLoading(false);
           toast.error("Network error", {
             position: "top-right",
             autoClose: 3000,
@@ -161,11 +151,10 @@ export default function Vote(props) {
 
   let btn;
   if (data) {
-    btn = data.voters.includes(token.mobile_id) ? "View Stats" : "Submit";
+    btn = data.voted ? "View Stats" : "Submit";
   }
   return (
     <div className="poll-container">
-      {loading ? <Loader style={{ position: "fixed" }} /> : null}
       <h5
         style={{
           alignSelf: "start",
@@ -227,18 +216,10 @@ export default function Vote(props) {
                     color: "#fff",
                     outline: "none",
                   }}
-                  className={
-                    obj.voted || obj.voters.includes(token.mobile_id)
-                      ? "green"
-                      : "grey"
-                  }
+                  className={obj.voted ? "green" : "grey"}
                   // key={item._id}
                   // value={item._id}
-                  onClick={
-                    item.voters.includes(token.mobile_id)
-                      ? null
-                      : () => vote(obj._id, item._id)
-                  }
+                  onClick={item.voted ? null : () => vote(obj._id, item._id)}
                 >
                   <FontAwesomeIcon icon={faCheck} />
                 </button>

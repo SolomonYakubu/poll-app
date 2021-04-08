@@ -8,7 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import axios from "axios";
 
-export default function LogIn() {
+export default function LogIn(props) {
   const history = useHistory();
   const [number, setNumber] = useState("");
   // const [token, setToken] = useState([]);
@@ -17,6 +17,7 @@ export default function LogIn() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    props.load(true);
     try {
       const response = await axios.post(
         "http://192.168.43.244:3002/user/log-in",
@@ -32,11 +33,11 @@ export default function LogIn() {
       // setToken(response);
       const token = response.data;
       localStorage.setItem("token", JSON.stringify(token));
-      console.log(token);
+      props.load(false);
       history.push("/poll");
     } catch (error) {
       const err = error.message.split(" ")[5];
-
+      props.load(false);
       switch (err) {
         case "403":
           toast.error("Mobile number is already registered", {
@@ -66,8 +67,6 @@ export default function LogIn() {
             hideProgressBar: "false",
           });
       }
-
-      console.log(err);
     }
   };
 

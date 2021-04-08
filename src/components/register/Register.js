@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-export default function Register() {
+export default function Register(props) {
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
 
@@ -20,8 +20,9 @@ export default function Register() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    props.load(true);
     try {
-      const response = await axios.post(
+      await axios.post(
         "http://192.168.43.244:3002/user/register",
         {
           name: name,
@@ -33,11 +34,11 @@ export default function Register() {
           },
         }
       );
+      props.load(false);
       history.push("/");
-      console.log(response.data);
     } catch (error) {
       const err = error.message.split(" ")[5];
-
+      props.load(false);
       switch (err) {
         case "403":
           toast.error("Mobile number is already registered", {

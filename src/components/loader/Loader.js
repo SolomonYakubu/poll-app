@@ -1,9 +1,12 @@
 import React from "react";
-import { Ripple } from "awesome-react-spinners";
-export default function Loader() {
+import Loader from "react-loader-spinner";
+import "../style.css";
+export default function Spinner() {
   return (
     <>
-      <Ripple />
+      <div style={{ position: "fixed", top: "45%", right: "40%" }}>
+        <Loader type="Oval" color="#007fff" height={60} />
+      </div>
     </>
   );
 }

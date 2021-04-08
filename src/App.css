@@ -1,7 +1,12 @@
 .App {
-  text-align: center;
-  height: 100%;
-  width: 100vw;
   background-color: #f4f4f4;
+
+  min-height: 100vh;
+  text-align: center;
+  width: 100vw;
+  background-color: none;
+  display: flex;
+  flex-direction: column;
+  position: relative;
   padding-bottom: 40px;
 }

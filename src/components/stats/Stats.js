@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { useHistory } from "react-router-dom";
 import axios from "axios";
-export default function Stats() {
+export default function Stats(props) {
   const history = useHistory();
   const [data, setData] = useState();
   const pollId = localStorage.getItem("pollId");
@@ -12,6 +12,7 @@ export default function Stats() {
 
   useEffect(() => {
     const getData = async () => {
+      props.load(true);
       try {
         const response = await axios.get(
           `http://192.168.43.244:3002/poll/stats/${pollId}`,
@@ -23,10 +24,11 @@ export default function Stats() {
         );
 
         setData(response.data);
-        console.log(response.data);
+        props.load(false);
         // setLoading(false);
       } catch (error) {
         const err = error.message.split(" ")[5];
+        props.load(false);
         switch (err) {
           case "401":
             // setLoading(false);
@@ -52,7 +54,6 @@ export default function Stats() {
 
     //eslint-disable-next-line
   }, []);
-  console.log(data);
   let dataToRender;
 
   if (data) {
@@ -73,7 +74,7 @@ export default function Stats() {
           </div>
         </div>
         {data.categoryStat.map((item) => (
-          <div className="stats-category-div">
+          <div className="stats-category-div" key={item._id}>
             <div className="stats-category-heading">{item.name}</div>
             <div>
               {item.candidates.map((obj) => (
@@ -92,6 +93,7 @@ export default function Stats() {
                     borderRadius: "5px",
                     borderWidth: "2px",
                   }}
+                  key={obj._id}
                 >
                   <div style={{ marginRight: "2px" }}>{obj.name}</div>
                   <div
@@ -128,6 +130,16 @@ export default function Stats() {
                       {((obj.votes / item.totalVoters) * 100).toFixed(2)}%
                     </div>
                   </div>
+                  <div
+                    style={{
+                      margin: "5px",
+                      fontSize: "12px",
+                      color: "#a9a9a9",
+                      marginBottom: 0,
+                    }}
+                  >
+                    Votes: {obj.votes}
+                  </div>
                 </div>
               ))}
             </div>
@@ -139,6 +151,7 @@ export default function Stats() {
 
   return (
     <div className="stats-container">
+      <ToastContainer />
       <h1
         style={{
           color: "#fff",

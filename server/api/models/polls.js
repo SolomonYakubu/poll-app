@@ -5,7 +5,13 @@ const pollSchema = mongoose.Schema({
     required: true,
     type: String,
   },
-  voters: Array,
+  voters: {
+    type: Array,
+  },
+   votes: {
+            type: Number,
+            default: 0,
+          },
   categories: [
     {
       name: {
@@ -13,6 +19,10 @@ const pollSchema = mongoose.Schema({
         required: true,
       },
       voters: Array,
+      votes: {
+        type: Number,
+        default: 0,
+      },
       candidate: [
         {
           name: String,

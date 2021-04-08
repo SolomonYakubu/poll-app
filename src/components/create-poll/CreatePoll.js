@@ -6,17 +6,16 @@ import "react-toastify/dist/ReactToastify.css";
 import { useHistory } from "react-router-dom";
 import axios from "axios";
 
-import { Ring } from "awesome-react-spinners";
 import "../style.css";
-const Category = (props) => {
+const CreatePoll = (props) => {
   const history = useHistory();
-  const [loading, setLoading] = useState(false);
+
   const [category, setCategory] = useState([]);
   const [name, setName] = useState("");
 
   const [candidateName, setCandidateName] = useState("");
   const token = JSON.parse(localStorage.getItem("token"));
-  const pollName = localStorage.getItem("pollName");
+
   const pollId = localStorage.getItem("pollId");
 
   //getData on load
@@ -26,6 +25,7 @@ const Category = (props) => {
       history.push("/");
     }
     const getData = async () => {
+      props.load(true);
       try {
         const response = await axios.get(
           `http://192.168.43.244:3002/poll/${pollId}`,
@@ -37,12 +37,12 @@ const Category = (props) => {
         );
 
         setCategory([...response.data.categories]);
-        setLoading(false);
+        props.load(false);
       } catch (error) {
         const err = error.message.split(" ")[5];
+        props.load(false);
         switch (err) {
           case "401":
-            setLoading(false);
             toast.error("Session expired", {
               position: "top-right",
               autoClose: 3000,
@@ -52,7 +52,6 @@ const Category = (props) => {
             break;
 
           default:
-            setLoading(false);
             toast.error("Network error", {
               position: "top-right",
               autoClose: 3000,
@@ -72,7 +71,14 @@ const Category = (props) => {
     setCandidateName(val);
   };
   const addCategory = async () => {
-    setLoading(true);
+    if (name <= 0) {
+      return toast.error("Fields cannot be empty", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: "false",
+      });
+    }
+    props.load(true);
     try {
       const response = await axios.post(
         "http://192.168.43.244:3002/poll/category",
@@ -88,17 +94,16 @@ const Category = (props) => {
         }
       );
       //console.log(response.data);
-      setLoading(false);
+      props.load(false);
       setCategory([...response.data.categories]);
       setName("");
       console.log(category);
     } catch (error) {
       const err = error.message.split(" ")[5];
       console.log(error.message);
-
+      props.load(false);
       switch (err) {
         case "406":
-          setLoading(false);
           toast.error("Category already exist", {
             position: "top-right",
             autoClose: 3000,
@@ -107,7 +112,6 @@ const Category = (props) => {
           break;
 
         default:
-          setLoading(false);
           toast.error("Network error", {
             position: "top-right",
             autoClose: 3000,
@@ -117,7 +121,14 @@ const Category = (props) => {
     }
   };
   const addCandidate = async (val) => {
-    setLoading(true);
+    if (candidateName <= 0) {
+      return toast.error("Fields cannot be empty", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: "false",
+      });
+    }
+    props.load(true);
     try {
       const response = await axios.post(
         `http://192.168.43.244:3002/poll/candidate/${val}`,
@@ -132,15 +143,14 @@ const Category = (props) => {
           },
         }
       );
-      setLoading(false);
+      props.load(false);
       setCategory([...response.data.categories]);
-      console.log(response);
+      setCandidateName("");
     } catch (error) {
       const err = error.message.split(" ")[5];
-
+      props.load(false);
       switch (err) {
         case "406":
-          setLoading(false);
           toast.error("Candidate already exist", {
             position: "top-right",
             autoClose: 3000,
@@ -149,7 +159,6 @@ const Category = (props) => {
           break;
 
         default:
-          setLoading(false);
           toast.error("Network error", {
             position: "top-right",
             autoClose: 3000,
@@ -157,9 +166,9 @@ const Category = (props) => {
           });
       }
     }
-    console.log(val);
   };
   const deleteCandidate = async (candidate_id, category_id) => {
+    props.load(true);
     try {
       const response = await axios({
         url: `http://192.168.43.244:3002/poll/category/${category_id}/candidate/${candidate_id}`,
@@ -172,20 +181,16 @@ const Category = (props) => {
       });
 
       setCategory([...response.data.categories]);
-      console.log(response);
+      props.load(false);
     } catch (error) {
-      console.log(error.message);
+      props.load(false);
     }
   };
-  console.log(pollName);
+
   return (
     <div className="poll-container">
       <ToastContainer limit={1} />
-      {loading ? (
-        <p>
-          <Ring />
-        </p>
-      ) : null}
+
       <div className="poll-body" style={{ background: "none", width: "95%" }}>
         <h2 className="create-poll-label heading">
           {localStorage.getItem("pollName")}
@@ -269,6 +274,7 @@ const Category = (props) => {
                     borderBottomRightRadius: "8px",
                   }}
                   onChange={(e) => onCandidateNameChange(e.target.value)}
+                  value={candidateName}
                 />
                 <button
                   className="poll-create-poll-btn"
@@ -330,4 +336,4 @@ const Category = (props) => {
     </div>
   );
 };
-export default Category;
+export default CreatePoll;

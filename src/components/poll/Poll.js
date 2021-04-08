@@ -3,7 +3,7 @@ import { useHistory } from "react-router-dom";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Ring } from "awesome-react-spinners";
+
 import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/themes/dark.css";
 import "../style.css";
@@ -12,14 +12,13 @@ function CreatPoll(props) {
   const token = JSON.parse(localStorage.getItem("token"));
   const [date, setDate] = useState(`${new Date()}`);
   const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const history = useHistory();
   const onNameChange = (val) => {
     setName(val);
   };
   const createPoll = async () => {
-    setLoading(true);
+    props.load(true);
     try {
       const response = await axios.post(
         "http://192.168.43.244:3002/poll",
@@ -36,15 +35,15 @@ function CreatPoll(props) {
       );
       localStorage.setItem("pollName", name);
       localStorage.setItem("pollId", response.data._id);
-      console.log(response.data);
-      setLoading(false);
+
+      props.load(false);
       history.push("/create-poll");
     } catch (error) {
       const err = error.message.split(" ")[5];
 
       switch (err) {
         case "406":
-          setLoading(false);
+          props.load(false);
           toast.error("Poll already exist", {
             position: "top-right",
             autoClose: 3000,
@@ -52,7 +51,7 @@ function CreatPoll(props) {
           });
           break;
         case "400":
-          setLoading(false);
+          props.load(false);
           toast.error("Fields cannot be empty", {
             position: "top-right",
             autoClose: 3000,
@@ -60,7 +59,7 @@ function CreatPoll(props) {
           });
           break;
         case "401":
-          setLoading(false);
+          props.load(false);
           toast.error("Session Expired", {
             position: "top-right",
             autoClose: 3000,
@@ -69,7 +68,7 @@ function CreatPoll(props) {
           history.push("/");
           break;
         default:
-          setLoading(false);
+          props.load(false);
           toast.error("Network error", {
             position: "top-right",
             autoClose: 3000,
@@ -82,11 +81,7 @@ function CreatPoll(props) {
   return (
     <div className="poll-container">
       <ToastContainer limit={1} />
-      {loading ? (
-        <p>
-          <Ring />
-        </p>
-      ) : null}
+
       <div className="poll-body">
         <input
           type="text"
@@ -126,22 +121,23 @@ function CreatPoll(props) {
 export default function Poll(props) {
   const token = JSON.parse(localStorage.getItem("token"));
   const [poll, setPoll] = useState([]);
-  const [loading, setLoading] = useState(false);
+
   const [pollCreated, setPollCreated] = useState(false);
 
   const history = useHistory();
 
   const fetchData = async () => {
-    setLoading(true);
+    props.load(true);
     try {
       const response = await axios.get("http://192.168.43.244:3002/poll");
-      setLoading(false);
+      props.load(false);
       setPoll(response.data);
     } catch (error) {
       const err = error.message.split(" ")[5];
 
       switch (err) {
         case "404":
+          props.load(false);
           toast.error("No Polls Found", {
             position: "top-right",
             autoClose: 3000,
@@ -150,6 +146,7 @@ export default function Poll(props) {
           break;
 
         default:
+          props.load(false);
           toast.error("Network error", {
             position: "top-right",
             autoClose: 3000,
@@ -166,8 +163,9 @@ export default function Poll(props) {
 
     //eslint-disable-next-line
   }, []);
+
   const deletePoll = async (val) => {
-    setLoading(true);
+    props.load(true);
     try {
       const response = await axios({
         url: `http://192.168.43.244:3002/poll`,
@@ -178,20 +176,20 @@ export default function Poll(props) {
           Authorization: `Bearer ${token.adminToken}`,
         },
       });
-      setLoading(false);
+      props.load(false);
       console.log(response);
       window.location.reload();
     } catch (error) {
-      setLoading(false);
+      props.load(false);
       console.log(error.message);
     }
   };
-  console.log(token);
+
   return (
     <div className="poll-container ">
       <div className={pollCreated ? "hide" : "poll-container"}>
         <ToastContainer limit={1} />
-        {loading ? <Ring /> : null}
+
         {token.adminToken ? (
           <button
             className="poll-create-poll-btn"
@@ -232,6 +230,7 @@ export default function Poll(props) {
                 marginTop: "20px",
                 borderRadius: "7px",
               }}
+              className="poll-poll-div"
             >
               <div>
                 <div
@@ -376,7 +375,7 @@ export default function Poll(props) {
         className={pollCreated ? "poll-container" : "hide"}
         style={{ height: "100vh" }}
       >
-        <CreatPoll />
+        <CreatPoll load={props.load} />
       </div>
     </div>
   );
