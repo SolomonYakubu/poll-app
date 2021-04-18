@@ -5,6 +5,8 @@ const router = express.Router();
 const verifyToken = require("../auth/userAuth");
 const verifyAdminToken = require("../auth/adminAuth");
 const Polls = require("../models/polls");
+const Categories = require("../models/category");
+const Candidates = require("../models/candidates");
 
 const checkDeadline = async (req, res, next) => {
   const pollId = req.params.id;
@@ -41,10 +43,13 @@ router.get("/:id", [verifyToken, checkDeadline], async (req, res) => {
   const pollId = req.params.id;
   const mobile_id = req.data.mobile_id;
   try {
-    const poll = await Polls.findById(pollId);
-    if (!poll) {
+    const polls = await Polls.findById(pollId);
+    if (!polls) {
       res.sendStatus(404);
     }
+    const poll = await polls
+      .populate({ path: "categories", populate: { path: "candidates" } })
+      .execPopulate();
     const data = {
       name: poll.name,
       _id: poll._id,
@@ -53,7 +58,7 @@ router.get("/:id", [verifyToken, checkDeadline], async (req, res) => {
         name: item.name,
         _id: item._id,
         voted: item.voters.includes(mobile_id) ? true : false,
-        candidate: item.candidate.map((obj) => ({
+        candidates: item.candidates.map((obj) => ({
           name: obj.name,
           _id: obj._id,
           voted: obj.voters.includes(mobile_id) ? true : false,
@@ -97,29 +102,37 @@ router.post("/category", verifyAdminToken, async (req, res) => {
   try {
     const poll = await Polls.findById(pollId);
 
-    const nameArr = poll.categories.map((item) => item.name);
+    const nameArr = (
+      await poll.populate("categories").populate("candidates").execPopulate()
+    ).categories.map((item) => item.name);
+
     const isDuplicate = nameArr.includes(name) ? true : false;
 
     if (isDuplicate) {
       return res.status(406).json({ message: "category already exist" });
     }
-    poll.categories.push({ name });
-    const newPoll = await poll.save();
-    const newCategory = {
+    const category = new Categories({ name });
+    const newCategory = await category.save();
+
+    poll.categories = [...poll.categories, newCategory._id];
+    const newPoll = await (await poll.save())
+      .populate({
+        path: "categories",
+        select: ["name", "_id"],
+
+        populate: {
+          path: "candidates",
+          select: ["name", "_id"],
+        },
+      })
+      .execPopulate();
+    const data = {
       name: newPoll.name,
       _id: newPoll._id,
 
-      categories: newPoll.categories.map((item) => ({
-        name: item.name,
-        _id: item._id,
-
-        candidate: item.candidate.map((obj) => ({
-          name: obj.name,
-          _id: obj._id,
-        })),
-      })),
+      categories: newPoll.categories,
     };
-    res.status(201).json(newCategory);
+    res.status(201).json(data);
   } catch (error) {
     res.json({ message: error.message });
   }
@@ -136,34 +149,42 @@ router.post("/candidate/:category_id", verifyAdminToken, async (req, res) => {
 
   try {
     const poll = await Polls.findById(pollId);
-    const nameArr = poll.categories
-      .filter((item) => item._id == category_id)[0]
-      .candidate.map((item) => item.name);
+    const category = await Categories.findById(category_id);
+    const nameArr = (
+      await category.populate("candidates").execPopulate()
+    ).candidates.map((item) => item.name);
 
     const isDuplicate = nameArr.includes(name) ? true : false;
-    console.log(isDuplicate);
+
     if (isDuplicate) {
       return res.status(406).json({ message: "Candidate already exist" });
     }
-    poll.categories.id(category_id).candidate.push(data);
 
-    poll.save();
+    const candidate = new Candidates(data);
+    const newCandidate = await candidate.save();
+
+    category.candidates = [...category.candidates, newCandidate._id];
+    await category.save();
+
+    const currentPoll = await poll
+      .populate({
+        path: "categories",
+        select: ["name", "_id"],
+
+        populate: {
+          path: "candidates",
+          select: ["name", "_id"],
+        },
+      })
+      .execPopulate();
 
     const newPoll = {
-      name: poll.name,
-      _id: poll._id,
+      name: currentPoll.name,
+      _id: currentPoll._id,
 
-      categories: poll.categories.map((item) => ({
-        name: item.name,
-        _id: item._id,
-
-        candidate: item.candidate.map((obj) => ({
-          name: obj.name,
-          _id: obj._id,
-        })),
-      })),
+      categories: currentPoll.categories,
     };
-    res.sendStatus(201).json(newPoll);
+    res.status(201).json(newPoll);
   } catch (error) {
     res.json({ message: error.message });
   }
@@ -173,39 +194,77 @@ router.post("/vote", verifyToken, async (req, res) => {
   const pollId = req.body.pollId;
   const vote = req.body.vote;
   const mobile_id = req.data.mobile_id;
+  const verifyArr = vote.categories.map((item) => item.voted);
+  if (!verifyArr.every((val) => val === true)) {
+    return res.sendStatus(400);
+  }
   try {
     if (!(await Polls.findById(pollId))) {
-      res.sendStatus(404);
+      return res.sendStatus(404);
     }
     const poll = await Polls.findById(pollId);
+
     if (poll.voters.includes(mobile_id)) {
       return res.sendStatus(400);
     }
-    const categoryLength = vote.categories.length;
-    for (let i = 0; i < categoryLength; i++) {
-      if (poll.categories[i].voters.includes(mobile_id)) {
-        return res.sendStatus(400);
+
+    vote.categories.map(async (item) => {
+      //eslint-disable-next-line
+      if (item.voted) {
+        let categories = await Categories.findById(item._id);
+        categories.votes += 1;
+        categories.voters = [...categories.voters, mobile_id];
+        await categories.save();
       }
-      const candidateLength = vote.categories[i].candidate.length;
-      for (let j = 0; j < candidateLength; j++) {
-        if (vote.categories[i].candidate[j].voted) {
-          //all actions for categories
-          poll.categories.id(vote.categories[i]._id).voters.push(mobile_id);
-          poll.categories.id(vote.categories[i]._id).votes++;
-          //all actions for candidates
-          poll.categories
-            .id(vote.categories[i]._id)
-            .candidate.id(vote.categories[i].candidate[j]._id)
-            .voters.push(mobile_id);
-          poll.categories
-            .id(vote.categories[i]._id)
-            .candidate.id(vote.categories[i].candidate[j]._id).votes++;
+      item.candidates.map(async (obj) => {
+        if (obj.voted) {
+          //codes for categories
+
+          // Categories.findById(item._id, (err, category) => {
+          //   category.votes++;
+          //   category.voters = [...category.voters, mobile_id];
+          //   category.save();
+          //   Candidates.findById(obj._id, (err, candidate) => {
+          //     candidate.votes++;
+          //     candidate.voters = [...candidate.voters, mobile_id];
+          //     candidate.save();
+          //   });
+          // });
+
+          // Categories.findById(item._id)
+          //   .then((category) => {
+          //     category.votes++;
+          //     category.voters = [...category.voters, mobile_id];
+          //     category.save();
+          //   })
+          //   .catch((err) => res.json({ message: err.message }));
+
+          // Candidates.findById(obj._id)
+          //   .then((candidate) => {
+          //     candidate.votes++;
+          //     candidate.voters = [...candidate.voters, mobile_id];
+          //     candidate.save();
+          //   })
+          //   .catch((err) => res.json({ message: err.message }));
+          //codes for candidates
+          let candidate = await Candidates.findById(obj._id);
+          candidate.votes++;
+          candidate.voters = [...candidate.voters, mobile_id];
+
+          await candidate.save();
         }
-      }
-    }
-    poll.voters.push(mobile_id);
+      });
+    });
     poll.votes++;
-    poll.save();
+    poll.voters = [...poll.voters, mobile_id];
+    await poll.save();
+    // Polls.findById(pollId)
+    //   .then((poll) => {
+    //     poll.votes++;
+    //     poll.voters = [...poll.voters, mobile_id];
+    //     poll.save();
+    //   })
+    //   .catch((err) => res.json({ message: err.message }));
     res.sendStatus(200);
   } catch (error) {
     res.json({ message: error.message });
@@ -215,18 +274,32 @@ router.post("/vote", verifyToken, async (req, res) => {
 router.get("/stats/:pollId", verifyToken, async (req, res) => {
   const pollId = req.params.pollId;
   try {
-    const poll = await Polls.findById(pollId);
-    if (!poll) {
+    const polls = await Polls.findById(pollId);
+    if (!polls) {
       return res.sendStatus(404);
     }
+    const poll = await polls
+      .populate({ path: "categories", populate: { path: "candidates" } })
+      .execPopulate();
     const categories = poll.categories;
     const totalVoters = poll.votes;
-    const categoryStat = categories.map((item) => ({
+    const data = categories.map((item) => ({
       name: item.name,
       _id: item._id,
       totalVoters: item.votes,
-      candidates: item.candidate.sort((a, b) => b.votes - a.votes),
+      candidates: item.candidates.map((obj) => ({
+        votes: obj.votes,
+        _id: obj._id,
+        name: obj.name,
+      })),
     }));
+    const categoryStat = data.map((item) => ({
+      name: item.name,
+      _id: item._id,
+      totalVoters: item.totalVoters,
+      candidates: item.candidates.sort((a, b) => b.votes - a.votes),
+    }));
+
     res.json({ totalVoters, categoryStat });
   } catch (error) {
     res.json({ message: error.message });
@@ -235,10 +308,9 @@ router.get("/stats/:pollId", verifyToken, async (req, res) => {
 
 //delete a candidate
 router.delete(
-  "/category/:category_id/candidate/:candidate_id",
+  "/candidate/:candidate_id",
   verifyAdminToken,
   async (req, res) => {
-    const category_id = req.params.category_id;
     const candidate_id = req.params.candidate_id;
     const pollId = req.body.pollId;
 
@@ -252,24 +324,26 @@ router.delete(
       //   return res.sendStatus(404);
       // }
       // poll.categories.id(category_id).candidate = filter;
-      poll.categories.id(category_id).candidate.id(candidate_id).remove();
-      poll.save();
+      await Candidates.findById(candidate_id).remove();
 
-      const newPoll = {
-        name: poll.name,
-        _id: poll._id,
+      const newPoll = await (await poll.save())
+        .populate({
+          path: "categories",
+          select: ["name", "_id"],
 
-        categories: poll.categories.map((item) => ({
-          name: item.name,
-          _id: item._id,
+          populate: {
+            path: "candidates",
+            select: ["name", "_id"],
+          },
+        })
+        .execPopulate();
+      const data = {
+        name: newPoll.name,
+        _id: newPoll._id,
 
-          candidate: item.candidate.map((obj) => ({
-            name: obj.name,
-            _id: obj._id,
-          })),
-        })),
+        categories: newPoll.categories,
       };
-      res.json(newPoll);
+      res.status(201).json(data);
     } catch (error) {
       res.json({ message: error.message });
     }
@@ -281,23 +355,26 @@ router.delete("/category/:category_id", verifyAdminToken, async (req, res) => {
   const pollId = req.body.pollId;
   try {
     const poll = await Polls.findById(pollId);
-    poll.categories.id(category_id).remove();
-    poll.save();
-    const newPoll = {
-      name: poll.name,
-      _id: poll._id,
+    await Categories.findById(category_id).remove();
 
-      categories: poll.categories.map((item) => ({
-        name: item.name,
-        _id: item._id,
+    const newPoll = await (await poll.save())
+      .populate({
+        path: "categories",
+        select: ["name", "_id"],
 
-        candidate: item.candidate.map((obj) => ({
-          name: obj.name,
-          _id: obj._id,
-        })),
-      })),
+        populate: {
+          path: "candidates",
+          select: ["name", "_id"],
+        },
+      })
+      .execPopulate();
+    const data = {
+      name: newPoll.name,
+      _id: newPoll._id,
+
+      categories: newPoll.categories,
     };
-    res.json(newPoll);
+    res.status(201).json(data);
   } catch (error) {
     res.json({ message: error.message });
   }

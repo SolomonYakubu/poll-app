@@ -167,11 +167,11 @@ const CreatePoll = (props) => {
       }
     }
   };
-  const deleteCandidate = async (candidate_id, category_id) => {
+  const deleteCandidate = async (candidate_id) => {
     props.load(true);
     try {
       const response = await axios({
-        url: `http://192.168.43.244:3002/poll/category/${category_id}/candidate/${candidate_id}`,
+        url: `http://192.168.43.244:3002/poll/candidate/${candidate_id}`,
         method: "DELETE",
         data: { pollId },
         headers: {
@@ -225,7 +225,7 @@ const CreatePoll = (props) => {
               </div>
               <div className="create-poll-candidate-div">
                 <p className="create-poll-candidate-label">Candidates</p>
-                {item.candidate.map((obj) => (
+                {item.candidates.map((obj) => (
                   <div
                     style={{
                       display: "flex",
@@ -257,7 +257,7 @@ const CreatePoll = (props) => {
                         outline: "none",
                         fontWeight: "bold",
                       }}
-                      onClick={() => deleteCandidate(obj._id, item._id)}
+                      onClick={() => deleteCandidate(obj._id)}
                     >
                       x
                     </button>
@@ -274,7 +274,6 @@ const CreatePoll = (props) => {
                     borderBottomRightRadius: "8px",
                   }}
                   onChange={(e) => onCandidateNameChange(e.target.value)}
-                  value={candidateName}
                 />
                 <button
                   className="poll-create-poll-btn"

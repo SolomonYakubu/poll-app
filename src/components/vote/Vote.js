@@ -70,18 +70,27 @@ export default function Vote(props) {
     //eslint-disable-next-line
   }, []);
   const vote = (candidate_id, category_id) => {
+    if (data.voted) {
+      return;
+    }
     let newCategory = category;
 
     const catLength = newCategory.length;
 
     for (let i = 0; i < catLength; i++) {
       if (newCategory[i]._id === category_id) {
-        const canLength = newCategory[i].candidate.length;
-        for (let j = 0; j < canLength; j++) {
-          newCategory[i].candidate[j].voted = false;
+        const canLength = newCategory[i].candidates.length;
+        if (!data.voted) {
+          newCategory[i].voted = false;
+        }
 
-          if (newCategory[i].candidate[j]._id === candidate_id) {
-            newCategory[i].candidate[j].voted = true;
+        for (let j = 0; j < canLength; j++) {
+          newCategory[i].candidates[j].voted = false;
+
+          if (newCategory[i].candidates[j]._id === candidate_id) {
+            newCategory[i].voted = true;
+
+            newCategory[i].candidates[j].voted = true;
           }
         }
       }
@@ -183,7 +192,7 @@ export default function Vote(props) {
           <div className="create-poll-candidate-div" key={item._id}>
             <p className="create-poll-candidate-label">{item.name}</p>
 
-            {item.candidate.map((obj) => (
+            {item.candidates.map((obj) => (
               <div
                 style={{
                   display: "flex",
@@ -219,7 +228,7 @@ export default function Vote(props) {
                   className={obj.voted ? "green" : "grey"}
                   // key={item._id}
                   // value={item._id}
-                  onClick={item.voted ? null : () => vote(obj._id, item._id)}
+                  onClick={() => vote(obj._id, item._id)}
                 >
                   <FontAwesomeIcon icon={faCheck} />
                 </button>

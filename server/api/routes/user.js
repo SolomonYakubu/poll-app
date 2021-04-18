@@ -5,10 +5,6 @@ const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 
 const { verifyPhoneNumber } = require("nigerian-phone-number-validator");
-router.get("/", (req, res) => {
-  res.send("Hello world");
-  console.log(verifyPhoneNumber("081084054212"));
-});
 
 router.post("/register", async (req, res) => {
   const name = req.body.name;

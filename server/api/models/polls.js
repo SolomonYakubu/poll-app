@@ -8,38 +8,16 @@ const pollSchema = mongoose.Schema({
   voters: {
     type: Array,
   },
-   votes: {
-            type: Number,
-            default: 0,
-          },
+  votes: {
+    type: Number,
+    default: 0,
+  },
   categories: [
     {
-      name: {
-        type: String,
-        required: true,
-      },
-      voters: Array,
-      votes: {
-        type: Number,
-        default: 0,
-      },
-      candidate: [
-        {
-          name: String,
-          votes: {
-            type: Number,
-            default: 0,
-          },
-          voted: {
-            type: Boolean,
-            default: false,
-          },
-          voters: [],
-        },
-      ],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Categories",
     },
   ],
-
   deadline: {
     type: Date,
     required: true,
