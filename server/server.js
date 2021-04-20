@@ -2,8 +2,8 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const path = require("path");
-const userRoutes = require("./api/routes/user");
-const pollRoutes = require("./api/routes/poll");
+const userRoutes = require("./api/routes/userRoutes");
+const pollRoutes = require("./api/routes/pollRoutes");
 const mongoose = require("mongoose");
 
 mongoose.Promise = global.Promise;

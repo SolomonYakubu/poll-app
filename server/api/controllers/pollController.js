@@ -1,28 +1,14 @@
 require("dotenv").config();
-
-const express = require("express");
-const router = express.Router();
-const verifyToken = require("../auth/userAuth");
-const verifyAdminToken = require("../auth/adminAuth");
 const Polls = require("../models/polls");
 const Categories = require("../models/category");
 const Candidates = require("../models/candidates");
 
-const checkDeadline = async (req, res, next) => {
-  const pollId = req.params.id;
-  try {
-    const poll = await Polls.findById(pollId);
-    const deadline = poll.deadline;
-    if (new Date(deadline) < new Date()) {
-      return res.status(405).json({ message: "poll Expired" });
-    }
-    next();
-  } catch (error) {
-    res.json({ message: error.message });
-  }
-};
-// get all Polls
-router.get("/", async (req, res) => {
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+const getAllPolls = async (req, res) => {
   try {
     const polls = await Polls.find();
     if (polls == 0) {
@@ -37,9 +23,13 @@ router.get("/", async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
-});
-//get poll by id
-router.get("/:id", [verifyToken, checkDeadline], async (req, res) => {
+};
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+const getPollById = async (req, res) => {
   const pollId = req.params.id;
   const mobile_id = req.data.mobile_id;
   try {
@@ -69,9 +59,14 @@ router.get("/:id", [verifyToken, checkDeadline], async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
-});
-// Create a new Poll
-router.post("/", verifyAdminToken, async (req, res) => {
+};
+
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+const createPoll = async (req, res) => {
   // if (await Polls.findOne({ name: req.body.name })) {
   //   return res.status(406).json({ message: "Poll already exist" });
   // }
@@ -89,9 +84,14 @@ router.post("/", verifyAdminToken, async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
-});
-//Register a new category
-router.post("/category", verifyAdminToken, async (req, res) => {
+};
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+
+const registerCategory = async (req, res) => {
   const name = req.body.name;
   const pollId = req.body.pollId;
 
@@ -136,9 +136,14 @@ router.post("/category", verifyAdminToken, async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
-});
-// Register a new candidate
-router.post("/candidate/:category_id", verifyAdminToken, async (req, res) => {
+};
+
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+const registerCandidate = async (req, res) => {
   const name = req.body.name;
   const pollId = req.body.pollId;
 
@@ -188,9 +193,9 @@ router.post("/candidate/:category_id", verifyAdminToken, async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
-});
-//The new vote a candidate
-router.post("/vote", verifyToken, async (req, res) => {
+};
+
+const castVote = async (req, res) => {
   const pollId = req.body.pollId;
   const vote = req.body.vote;
   const mobile_id = req.data.mobile_id;
@@ -210,68 +215,47 @@ router.post("/vote", verifyToken, async (req, res) => {
 
     vote.categories.map(async (item) => {
       //eslint-disable-next-line
+
       if (item.voted) {
-        let categories = await Categories.findById(item._id);
-        categories.votes += 1;
-        categories.voters = [...categories.voters, mobile_id];
-        await categories.save();
+        try {
+          const categories = await Categories.findById(item._id);
+          await categories.votes++;
+          categories.voters = await [...categories.voters, mobile_id];
+          await categories.save();
+        } catch (error) {
+          res.json({ message: error.message });
+        }
       }
       item.candidates.map(async (obj) => {
         if (obj.voted) {
-          //codes for categories
+          try {
+            const candidate = await Candidates.findById(obj._id);
+            await candidate.votes++;
+            candidate.voters = await [...candidate.voters, mobile_id];
 
-          // Categories.findById(item._id, (err, category) => {
-          //   category.votes++;
-          //   category.voters = [...category.voters, mobile_id];
-          //   category.save();
-          //   Candidates.findById(obj._id, (err, candidate) => {
-          //     candidate.votes++;
-          //     candidate.voters = [...candidate.voters, mobile_id];
-          //     candidate.save();
-          //   });
-          // });
-
-          // Categories.findById(item._id)
-          //   .then((category) => {
-          //     category.votes++;
-          //     category.voters = [...category.voters, mobile_id];
-          //     category.save();
-          //   })
-          //   .catch((err) => res.json({ message: err.message }));
-
-          // Candidates.findById(obj._id)
-          //   .then((candidate) => {
-          //     candidate.votes++;
-          //     candidate.voters = [...candidate.voters, mobile_id];
-          //     candidate.save();
-          //   })
-          //   .catch((err) => res.json({ message: err.message }));
-          //codes for candidates
-          let candidate = await Candidates.findById(obj._id);
-          candidate.votes++;
-          candidate.voters = [...candidate.voters, mobile_id];
-
-          await candidate.save();
+            await candidate.save();
+          } catch (error) {
+            res.json({ message: error.message });
+          }
         }
       });
     });
-    poll.votes++;
-    poll.voters = [...poll.voters, mobile_id];
+    await poll.votes++;
+    poll.voters = await [...poll.voters, mobile_id];
     await poll.save();
-    // Polls.findById(pollId)
-    //   .then((poll) => {
-    //     poll.votes++;
-    //     poll.voters = [...poll.voters, mobile_id];
-    //     poll.save();
-    //   })
-    //   .catch((err) => res.json({ message: err.message }));
+
     res.sendStatus(200);
   } catch (error) {
     res.json({ message: error.message });
   }
-});
-//stats
-router.get("/stats/:pollId", verifyToken, async (req, res) => {
+};
+
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+const getStats = async (req, res) => {
   const pollId = req.params.pollId;
   try {
     const polls = await Polls.findById(pollId);
@@ -304,53 +288,57 @@ router.get("/stats/:pollId", verifyToken, async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
-});
+};
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+const deleteCandidate = async (req, res) => {
+  const candidate_id = req.params.candidate_id;
+  const pollId = req.body.pollId;
 
-//delete a candidate
-router.delete(
-  "/candidate/:candidate_id",
-  verifyAdminToken,
-  async (req, res) => {
-    const candidate_id = req.params.candidate_id;
-    const pollId = req.body.pollId;
+  try {
+    const poll = await Polls.findById(pollId);
 
-    try {
-      const poll = await Polls.findById(pollId);
+    // const filter = poll.categories
+    //   .id(category_id) //eslint-disable-next-line
+    //   .candidate.filter((item) => item._id != candidate_id);
+    // if (filter == null) {
+    //   return res.sendStatus(404);
+    // }
+    // poll.categories.id(category_id).candidate = filter;
+    await Candidates.findById(candidate_id).remove();
 
-      // const filter = poll.categories
-      //   .id(category_id) //eslint-disable-next-line
-      //   .candidate.filter((item) => item._id != candidate_id);
-      // if (filter == null) {
-      //   return res.sendStatus(404);
-      // }
-      // poll.categories.id(category_id).candidate = filter;
-      await Candidates.findById(candidate_id).remove();
+    const newPoll = await (await poll.save())
+      .populate({
+        path: "categories",
+        select: ["name", "_id"],
 
-      const newPoll = await (await poll.save())
-        .populate({
-          path: "categories",
+        populate: {
+          path: "candidates",
           select: ["name", "_id"],
+        },
+      })
+      .execPopulate();
+    const data = {
+      name: newPoll.name,
+      _id: newPoll._id,
 
-          populate: {
-            path: "candidates",
-            select: ["name", "_id"],
-          },
-        })
-        .execPopulate();
-      const data = {
-        name: newPoll.name,
-        _id: newPoll._id,
-
-        categories: newPoll.categories,
-      };
-      res.status(201).json(data);
-    } catch (error) {
-      res.json({ message: error.message });
-    }
+      categories: newPoll.categories,
+    };
+    res.status(201).json(data);
+  } catch (error) {
+    res.json({ message: error.message });
   }
-);
-//delete a category
-router.delete("/category/:category_id", verifyAdminToken, async (req, res) => {
+};
+
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+const deleteCategory = async (req, res) => {
   const category_id = req.params.category_id;
   const pollId = req.body.pollId;
   try {
@@ -378,10 +366,14 @@ router.delete("/category/:category_id", verifyAdminToken, async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
-});
+};
 
-//delete a poll
-router.delete("/", verifyAdminToken, async (req, res) => {
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+const deletePoll = async (req, res) => {
   const pollId = req.body.pollId;
 
   try {
@@ -400,6 +392,17 @@ router.delete("/", verifyAdminToken, async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
-});
+};
 
-module.exports = router;
+module.exports = {
+  getAllPolls,
+  getPollById,
+  createPoll,
+  registerCandidate,
+  registerCategory,
+  castVote,
+  getStats,
+  deleteCandidate,
+  deletePoll,
+  deleteCategory,
+};

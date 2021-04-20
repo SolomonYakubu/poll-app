@@ -1,12 +1,14 @@
 require("dotenv").config();
-const express = require("express");
-const router = express.Router();
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
-
 const { verifyPhoneNumber } = require("nigerian-phone-number-validator");
 
-router.post("/register", async (req, res) => {
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ */
+const registerUser = async (req, res) => {
   const name = req.body.name;
   const mobile_id = req.body.mobile_id;
   const admin_no = process.env.ADMIN_NO;
@@ -29,8 +31,9 @@ router.post("/register", async (req, res) => {
   } catch (error) {
     res.json({ message: error.message });
   }
-});
-router.post("/log-in", async (req, res) => {
+};
+
+const loginUser = async (req, res) => {
   const mobile_id = req.body.mobile_id;
   const admin_no = process.env.ADMIN_NO;
 
@@ -58,6 +61,8 @@ router.post("/log-in", async (req, res) => {
       res.json({ message: error.message });
     }
   }
-});
-
-module.exports = router;
+};
+module.exports = {
+  registerUser,
+  loginUser,
+};
